@@ -1,0 +1,15 @@
+{
+  "name": "speedtest-net",
+  "description": "Speedtest.net client",
+  "author": "DDSol",
+  "version": "0.1.2",
+  "main": "speedtest.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ddsol/speedtest.net.git"
+  },
+  "dependencies": {
+    "progress": "^1.1.8",
+    "xml2js": "^0.4.4"
+  }
+}
