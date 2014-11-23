@@ -27,7 +27,6 @@ SOFTWARE.
 */
 var
   parseXML = require('xml2js').parseString,
-  http=require('http'),
   url=require('url'),
   path=require('path'),
   EventEmitter=require('events').EventEmitter,
@@ -81,6 +80,9 @@ function getHttp(theUrl,discard,callback){
 
   if (typeof options=="string") options=url.parse(options);
 
+  var http=require(options.protocol=='https:'?'https':'http');
+  delete options.protocol;
+
   options.headers=options.headers||{};
   options.headers['user-agent']=options.headers['user-agent']||'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0';
 
@@ -119,6 +121,9 @@ function postHttp(theUrl,data,callback){
   options.headers['content-type']='application/x-www-form-urlencoded';
   options.headers['content-length']=data.length;
   options.method="POST";
+
+  var http=require(options.protocol=='https:'?'https':'http');
+  delete options.protocol;
 
   req=http.request(options,function(res){
     var data='';
@@ -169,6 +174,9 @@ function randomPutHttp(theUrl,size,callback){
     while (d.length<1024*16) d+=d;
     return d.substr(0,1024*16);
   }());
+
+  var http=require(options.protocol=='https:'?'https':'http');
+  delete options.protocol;
 
   var req=http.request(options,function(res){
     var data='',count=0;
