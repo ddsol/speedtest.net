@@ -48,7 +48,7 @@ function distance(origin,destination){
     function deg2rad(d){
       return d/180*Math.PI;
     }
-    
+
     var
       lat1 = origin.lat,
       lon1 = origin.lon,
@@ -66,7 +66,7 @@ function distance(origin,destination){
     return d
 }
 
-  
+
 function getHttp(theUrl,discard,callback){
 
   if (!callback){
@@ -78,12 +78,12 @@ function getHttp(theUrl,discard,callback){
 
   var
     options=theUrl;
-  
+
   if (typeof options=="string") options=url.parse(options);
-  
+
   options.headers=options.headers||{};
   options.headers['user-agent']=options.headers['user-agent']||'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0';
-    
+
   http.get(options,function(res){
     var data='',count=0;
     if (!discard) res.setEncoding('utf8');
@@ -97,9 +97,9 @@ function getHttp(theUrl,discard,callback){
       callback(null,data,res.statusCode);
     });
   }).on('error',callback);
-  
+
 }
-  
+
 function postHttp(theUrl,data,callback){
 
   if (!callback){
@@ -111,15 +111,15 @@ function postHttp(theUrl,data,callback){
 
   var
     options=theUrl;
-  
+
   if (typeof options=="string") options=url.parse(options);
-  
+
   options.headers=options.headers||{};
   options.headers['user-agent']=options.headers['user-agent']||'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0';
   options.headers['content-type']='application/x-www-form-urlencoded';
   options.headers['content-length']=data.length;
   options.method="POST";
-    
+
   req=http.request(options,function(res){
     var data='';
     res.setEncoding('utf8');
@@ -133,43 +133,43 @@ function postHttp(theUrl,data,callback){
   });
 
   req.on('error',callback);
-  
+
   req.end(data);
-  
+
 }
-  
+
 function randomPutHttp(theUrl,size,callback){
   callback=once(callback);
 
   size=(size||131072)|0;
-  
+
   var
     options=theUrl,
-    headers = { 
+    headers = {
       'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0',
       'content-length': size
     },
     toSend=size,
     sent1=false,
     dataBlock;
-    
+
   if (typeof options==="string") options=url.parse(theUrl);
 
-  
+
   options.headers=options.headers||{};
 
   for(var h in headers){
     options.headers[h]=options.headers[h]||headers[h];
   }
-    
+
   options.method='POST';
-  
+
   dataBlock=(function(){
     var d='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     while (d.length<1024*16) d+=d;
     return d.substr(0,1024*16);
   }());
-  
+
   var req=http.request(options,function(res){
     var data='',count=0;
     res.on('error',callback);
@@ -181,9 +181,9 @@ function randomPutHttp(theUrl,size,callback){
       callback(null,size); //return original size
     });
   });
-  
+
   req.on('error',callback);
-  
+
   function write(){
     do{
       if (!toSend) {
@@ -198,16 +198,16 @@ function randomPutHttp(theUrl,size,callback){
       toSend-=data.length;
     }while(req.write(data));
   }
-  
+
   req.on('drain',write);
-  
+
   write();
 }
-  
+
 function getXML(xmlurl,callback){
-    
+
   callback=once(callback);
-  
+
   getHttp(xmlurl,function(err,data){
     if (err) return callback(err);
     parseXML(data,function(err,xml){
@@ -215,14 +215,14 @@ function getXML(xmlurl,callback){
       callback(null,xml);
     });
   });
-  
+
 }
 
 function pingServer(server,callback){
   callback=once(callback);
 
   var tot=3,done=0,n,bestTime=3600;
-  
+
   function nextPing(){
     var start=process.hrtime();
     getHttp(url.resolve(server.url,'latency.txt'),function(err,data){
@@ -240,10 +240,10 @@ function pingServer(server,callback){
       }
     });
   };
-  
+
   nextPing();
-}  
-  
+}
+
 function pingServers(servers,count,callback){
   var result=[],todo=Math.min(count,servers.length),done=0;
   for(var n=0;n<=todo;n++)(function(server){
@@ -280,11 +280,11 @@ function downloadSpeed(urls,maxTime,callback){
   if (this.emit) {
     emit=this.emit.bind(this);
   } else {this.emit=function(){}};
-  
+
   next();
-  
+
   var timeStart=process.hrtime();
-  
+
   function next(){
     if (started>=todo) return; //all are started
     if (running>=concurrent) return;
@@ -293,19 +293,19 @@ function downloadSpeed(urls,maxTime,callback){
       starting=started,
       url=urls[starting];
     started++;
-    
+
     getHttp(url,true,function(err,count){ //discard all data and return byte count
       var diff=process.hrtime(timeStart), timePct,amtPct;
       diff=diff[0] + diff[1]*1e-9; //seconds
-      
+
       running--;
       totalBytes+=count;
       done++;
-      
+
       timePct=diff/maxTime*100;
       amtPct=done/todo*100;
       amtPct=0; //time-only
-      
+
       if (diff>maxTime) {
         done=todo;
       }
@@ -316,7 +316,7 @@ function downloadSpeed(urls,maxTime,callback){
         next();
       }
     });
-    
+
     next(); //Try another
   }
 }
@@ -331,11 +331,11 @@ function uploadSpeed(url,sizes,maxTime,callback){
   if (this.emit) {
     emit=this.emit.bind(this);
   } else {this.emit=function(){}};
-  
+
   next();
-  
+
   var timeStart=process.hrtime();
-  
+
   function next(){
     if (started>=todo) return; //all are started
     if (running>=concurrent) return;
@@ -343,9 +343,9 @@ function uploadSpeed(url,sizes,maxTime,callback){
     var
       starting=started,
       size=sizes[starting];
-    started++;  
+    started++;
     //started=(started+1) % todo; //Keep staing more until the time is up...
-    
+
     randomPutHttp(url,size,function(err,count){ //discard all data and return byte count
       if (done>=todo) return;
       if (err) {
@@ -353,15 +353,15 @@ function uploadSpeed(url,sizes,maxTime,callback){
       }
       var diff=process.hrtime(timeStart), timePct,amtPct;
       diff=diff[0] + diff[1]*1e-9; //seconds
-      
+
       running--;
       totalBytes+=size;
       done++;
-      
+
       timePct=diff/maxTime*100;
       amtPct=done/todo*100;
       //amtPct=0; //time-only
-      
+
       if (diff>maxTime) {
         done=todo;
       }
@@ -372,7 +372,7 @@ function uploadSpeed(url,sizes,maxTime,callback){
         next();
       }
     });
-    
+
     next(); //Try another
   }
 }
@@ -384,7 +384,7 @@ function speedTest(options){
   options.maxTime=options.maxTime||10000;
   options.pingCount=options.pingCount||5;
   options.maxServers=options.maxServers||1;
-  
+
   var self=new EventEmitter();
 
   function httpOpts(theUrl){
@@ -392,53 +392,53 @@ function speedTest(options){
     o.headers=options.headers||{};
     return o;
   }
-  
+
   //Fetch config
-  
+
   var speedInfo={};
-  
+
   getXML(httpOpts('http://www.speedtest.net/speedtest-config.php'),gotConfig);
-  
+
   function gotConfig(err,config){
     if (err) return self.emit('error',err);
     config=config.settings||{};
-    
+
     function get(name){ return ((config[name]||[])[0]||{}).$||{} }
-    
+
     var
       client=get('client');
       times=get('times'),
       download=get('download'),
       upload=get('upload');
-    
+
     speedInfo.config={client:client,times:times,download:download,upload:upload};
-    
+
     self.emit('config',speedInfo.config);
     gotData();
   }
-  
+
   getXML(httpOpts('http://www.speedtest.net/speedtest-servers-static.php'),gotServers);
 
   function gotServers(err,servers){
     var s=servers.settings.servers[0].server;
-    
+
     servers=[];
     for (var n=0;n<s.length;n++){
       servers.push(s[n].$);
     }
-    
+
     speedInfo.servers=servers;
-    
+
     self.emit('servers',servers);
     gotData()
   }
-  
+
   function gotData(){
     if (!speedInfo.config || !speedInfo.servers) return; //not ready yet
-    
+
     //order servers by how close they are:
     var servers=speedInfo.servers;
-    
+
     for (var n=0;n<servers.length;n++){
       var
         server=servers[n],
@@ -446,22 +446,22 @@ function speedTest(options){
       server.dist=dist;
       server.distMi=dist*0.621371;
     }
-    
+
     servers.sort(function(a,b){
       return (a.dist-b.dist);
     });
-    
+
     pingServers(servers,options.pingCount,function(err,bestServers){
       if (!bestServers || !bestServers.length) return self.emit('error',new Error('Could not find a server to test on.'));
-      
+
       speedInfo.bestServers=bestServers;
       speedInfo.bestServer=speedInfo.bestServers[0]
       self.emit('bestservers',bestServers);
-      
+
       startDownload();
     });
   }
-  
+
   function startDownload(ix){
     ix=ix||0;
     if (ix>=speedInfo.bestServers.length || ix>=options.maxServers) return startUpload();
@@ -470,20 +470,20 @@ function speedTest(options){
       svrurl = server.url,
       sizes = [350, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000],
       urls = [], n, i, size;
-    
+
     for (n=0;n<sizes.length;n++){
       size=sizes[n];
       for (i=0;i<4;i++){
         urls.push(url.resolve(svrurl,'random'+size+'x'+size+'.jpg'));
       }
     }
-    
+
     self.emit('testserver',server);
-    
+
     downloadSpeed.call(self,urls,options.maxTime,function(err,speed){
       self.emit('downloadprogress',100);
       self.emit('downloadspeed',speed);
-      
+
       if (speedInfo.downloadSpeed) {
         if (speed>speedInfo.downloadSpeed) {
           speedInfo.downloadSpeed=speed;
@@ -492,14 +492,14 @@ function speedTest(options){
       } else {
         speedInfo.downloadSpeed=speed;
       }
-      
+
       startDownload(ix+1);
     });
-    
+
   }
-  
+
   function startUpload(){
-  
+
     var
       sizesizes = [Math.round(0.25 * 1000 * 1000), Math.round(0.5 * 1000 * 1000), Math.round(1 * 1000 * 1000), Math.round(2 * 1000 * 1000), Math.round(4 * 1000 * 1000), Math.round(8 * 1000 * 1000), Math.round(16 * 1000 * 1000), Math.round(32 * 1000 * 1000)],
       sizesize,
@@ -514,12 +514,12 @@ function speedTest(options){
     uploadSpeed.call(self,speedInfo.bestServer.url,sizes,options.maxTime,function(err,speed){
       self.emit('uploadprogress',100);
       self.emit('uploadspeed',speed);
-      
+
       speedInfo.uploadSpeed=speed;
-      
-      
+
+
       //emit results as nice, clean, object
-      
+
       /*
       { url: 'http://208.54.87.70/speedtest/upload.jsp',
         lat: '40.9419',
@@ -533,30 +533,30 @@ function speedTest(options){
         dist: 114.3911751633326,
         bestPing: 37.36689500000001 }
       */
-      
+
       function num(name){
         speedInfo.config.client[name]=parseFloat(speedInfo.config.client[name]);
       }
-      
+
       num('lat');
       num('lon');
       num('isprating');
       num('rating');
       num('ispdlavg');
       num('ispulavg');
-      
+
       delete speedInfo.config.client.loggedin; //We're never logged in, so this is useless.
-      
+
       //Convert to bytes/s
       speedInfo.config.client.ispdlavg=speedInfo.config.client.ispdlavg*1000/8;
       speedInfo.config.client.ispulavg=speedInfo.config.client.ispulavg*1000/8;
-      
-      var 
+
+      var
         best=speedInfo.bestServer,
         data={
           speeds:{
             //Rounding, because these numbers look way more accurate than they are...
-            download:Math.round(speedInfo.downloadSpeed), 
+            download:Math.round(speedInfo.downloadSpeed),
             upload:Math.round(speedInfo.uploadSpeed),
           },
           client:speedInfo.config.client,
@@ -573,13 +573,13 @@ function speedTest(options){
             ping:Math.round(best.bestPing*10)/10,
             id:best.id
           }
-          
+
         }
       self.emit('data',data);
       postResults();
     });
   }
-  
+
   function postResults(){
     var
       best=speedInfo.bestServer,
@@ -600,33 +600,33 @@ function speedTest(options){
       ],
       reportUrl='http://www.speedtest.net/api/api.php',
       prms=[],n;
-      
+
     //http://www.speedtest.net/api/api.php?download=18445&ping=33&upload=6171&promo=90&startmode=flyok&recommendedserverid=3589&accuracy=1&serverid=3589&hash=8c910aa2be2d0da5e97fe797b3a36e4a
-      
+
     for(n=0;n<res.length;n+=2){
       prms.push(res[n]+'='+encodeURIComponent(res[n+1]));
     }
     var opts=httpOpts(reportUrl);
-    
+
     opts.headers.referer='http://c.speedtest.net/flash/speedtest.swf';
-    
+
     postHttp(opts,prms.join('&'),function(err,data,status){
       var match=(''+data).match(/^resultid=(\d+)(&|$)/),resultUrl;
       if (status==200 && match && match[1]){ //I get '0', don't know why. No one knows why.
         resultUrl='http://www.speedtest.net/result/'+match[1]+'.png';
       }
-      
+
       speedInfo.resultUrl=resultUrl;
-      
+
       self.emit('result',resultUrl);
       self.emit('done',speedInfo);
     });
   }
-  
+
   return self;
-  
+
 }
-  
+
 module.exports=speedTest;
 
 function visualSpeedTest(options,callback){
@@ -637,19 +637,19 @@ function visualSpeedTest(options,callback){
     test=speedTest(options),
     log=function(){},
     finalData;
-  
+
   if (options.log){
     if (typeof options.log === "function") {
       log=options.log;
     } else {
       log=console.log.bind(console);
     }
-  }  
-    
+  }
+
   test.on('error',function(err){
     callback(err);
   });
-    
+
   test.on('testserver',function(server){
     log('Using server by '+server.sponsor+' in '+server.name+', '+server.country+' ('+(server.distMi*0.621371).toFixed(0)+'mi, '+(server.bestPing).toFixed(0)+'ms)');
   });
@@ -667,7 +667,7 @@ function visualSpeedTest(options,callback){
       bar=null;
       return;
     }
-    
+
     if (!bar) {
       var
         green = '\u001b[42m \u001b[0m',
@@ -681,7 +681,7 @@ function visualSpeedTest(options,callback){
         total: 100
       });
     }
-    
+
     bar.update(pct/100);
   }
 
@@ -716,7 +716,7 @@ function visualSpeedTest(options,callback){
   });
 
   return test;
-  
+
 };
 
 speedTest.visual=visualSpeedTest;
