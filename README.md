@@ -51,6 +51,7 @@ The options include:
 * `maxServers` The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
 * `headers` Headers to send to speedtest.net
 * `log` (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
+* `serverId` ID of the server to restrict the tests against.
 
 ## Events
 
