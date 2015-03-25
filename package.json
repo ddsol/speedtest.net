@@ -2,7 +2,7 @@
   "name": "speedtest-net",
   "description": "Speedtest.net client",
   "author": "DDSol",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "speedtest.js",
   "repository": {
     "type": "git",
