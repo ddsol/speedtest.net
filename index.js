@@ -246,7 +246,7 @@ function pingServer(server,callback){
   
 function pingServers(servers,count,callback){
   var result=[],todo=Math.min(count,servers.length),done=0;
-  for(var n=0;n<=todo;n++)(function(server){
+  for(var n=0;n<todo;n++)(function(server){
     result.push(server);
     server.bestPing=3600,
     pingServer(server,function(err,bestTime){
@@ -382,7 +382,7 @@ function speedTest(options){
   options=options||{};
 
   options.maxTime=options.maxTime||10000;
-  options.pingCount=options.pingCount||5;
+  options.pingCount=options.pingCount||(options.serverId ? 1 : 5);
   options.maxServers=options.maxServers||1;
   
   var self=new EventEmitter();
@@ -424,6 +424,10 @@ function speedTest(options){
     
     servers=[];
     for (var n=0;n<s.length;n++){
+      if (options.serverId && s[n].$.id == options.serverId) {
+          servers = [s[n].$];
+          break;
+      }
       servers.push(s[n].$);
     }
     
