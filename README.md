@@ -77,7 +77,7 @@ Fired when data is uploaded.
 The progress in percent is passed.
 
 ```javascript
-  require('speedtest-net')().on('upprogress',function(progress){
+  require('speedtest-net')().on('uploadprogress',function(progress){
     console.log('Upload progress:',progress);
   });
 ```
@@ -124,7 +124,7 @@ Fired after closest servers are pinged.
 An ordered list of server objects is passed, fastest first.
 
 ```javascript
-  require('speedtest-net')().on('bestServers',function(servers){
+  require('speedtest-net')().on('bestservers',function(servers){
     console.log('Closest servers:');
     console.dir(servers);
   });
@@ -136,7 +136,7 @@ Fired before download or upload is started on a server.
 The server object is passed.
 
 ```javascript
-  require('speedtest-net')().on('testServer',function(server){
+  require('speedtest-net')().on('testserver',function(server){
     console.log('Test server:');
     console.dir(server);
   });
