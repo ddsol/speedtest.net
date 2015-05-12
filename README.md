@@ -146,7 +146,7 @@ The server object is passed.
 
 Fired when a download speed is found.
 When testing on multiple servers, it's fired multiple times.
-The speed in bytes per second is passed.
+The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results.
 The associated server is the server passed in the last `testserver` event.
 
 ```javascript
@@ -158,7 +158,7 @@ The associated server is the server passed in the last `testserver` event.
 ### uploadspeed
 
 Fired when the upload speed is found.
-The speed in bytes per second is passed.
+The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results.
 The associated server is the server passed in the last `testserver` event, which will be the fastest server from download test(s).
 
 ```javascript
@@ -197,8 +197,10 @@ The data is passed.
 The returned data is a nested object with the following properties:
 
 * __`speeds`__:
- * `download`: download bandwidth in bytes per second
- * `upload`: upload bandwidth in bytes per second
+ * `download`: download bandwidth in megabits per second
+ * `upload`: upload bandwidth in megabits per second
+ * `originalDownload`: unadjusted download bandwidth in bytes per second
+ * `originalUpload`: unadjusted upload bandwidth in bytes per second
   
   
 *  __`client`__:
@@ -208,7 +210,7 @@ The returned data is a nested object with the following properties:
  * `isp`: client's isp
  * `isprating`: some kind of rating
  * `rating`: another rating, which is always 0 it seems
- * `ispdlavg`: avg download speed by all users of this isp
+ * `ispdlavg`: avg download speed by all users of this isp in Mbps
  * `ispulavg`: same for upload
   
   
@@ -238,6 +240,15 @@ Note that it is not fired when an error occurs.
     console.log('The speed test has completed successfully.');
   });
 ```
+
+## Considerations
+
+The test results are fudged to be in-line with what speedtest.net (owned by Ookla) produces. Please see the
+[Ookla test flow](http://www.ookla.com/support/a21110547/what+is+the+test+flow+and) description to find out why it is
+necessary to do this. It is certainly possible to copy Ookla's test method in node.js, but it's a significant job.
+
+The current method is likely to produce very similar results as speedtest.net, as long as the internet connection with
+the serer has a relatively low [packet jitter](http://en.wikipedia.org/wiki/Jitter#Packet_jitter_in_computer_networks).
 
 ## License
 
