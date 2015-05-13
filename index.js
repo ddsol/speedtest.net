@@ -582,8 +582,8 @@ function speedTest(options){
                 data={
                     speeds:{
                         //Rounding, because these numbers look way more accurate than they are...
-                        download:Math.round(speedInfo.speedTestDownloadSpeed),
-                        upload:Math.round(speedInfo.speedTestUploadSpeed),
+                        download:Math.round(speedInfo.speedTestDownloadSpeed*1000)/1000,
+                        upload:Math.round(speedInfo.speedTestUploadSpeed*1000)/1000,
                         originalDownload:Math.round(speedInfo.downloadSpeed),
                         originalUpload:Math.round(speedInfo.uploadSpeed)
                     },
