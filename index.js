@@ -437,6 +437,7 @@ function speedTest(options){
     getXML(httpOpts('http://www.speedtest.net/speedtest-servers-static.php'),gotServers);
 
     function gotServers(err,servers){
+        if (err) return self.emit('error',err);
         var s=servers.settings.servers[0].server;
 
         servers=[];
