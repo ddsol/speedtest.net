@@ -167,6 +167,24 @@ The associated server is the server passed in the last `testserver` event, which
   });
 ```
 
+### downloadspeedprogress
+Fired before final download has completed to show download speed in progress, and is fired multiple times. The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results. The associated server is the server passed in the most recent testserver event.
+
+```javascript
+  require('speedtest-net')().on('downloadspeedprogress',function(speed){
+    console.log('Download speed (in progress):',(speed/1000).toFixed(2),'KB/s');
+  });
+```
+
+### uploadspeedprogress
+Fired before final download has completed to show upload speed in progress, and is fired multiple times. The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results. The associated server is the server passed in the most recent testserver event.
+
+```javascript
+  require('speedtest-net')().on('uploadspeedprogress',function(speed){
+    console.log('Upload speed (in progress):',(speed/1000).toFixed(2),'KB/s');
+  });
+```
+
 ### result
 
 Fired when the data has been uploaded to SpeedTest.net server.

@@ -309,12 +309,14 @@ function downloadSpeed(urls,maxTime,callback){
         started++;
 
         getHttp(url,true,function(err,count){ //discard all data and return byte count
-            var diff=process.hrtime(timeStart), timePct,amtPct;
+            var diff=process.hrtime(timeStart), timePct,amtPct,speed,fixed;
             diff=diff[0] + diff[1]*1e-9; //seconds
 
             running--;
             totalBytes+=count;
             done++;
+            speed=totalBytes/diff;
+            fixed=speed*speedTestDownloadCorrectionFactor/125000;
 
             timePct=diff/maxTime*100;
             // amtPct=done/todo*100;
@@ -323,9 +325,12 @@ function downloadSpeed(urls,maxTime,callback){
             if (diff>maxTime) {
                 done=todo;
             }
-            if (done<=todo) emit('downloadprogress',Math.round(Math.min(Math.max(timePct,amtPct),100.0)*10)/10);
+            if (done<=todo) {
+                emit('downloadprogress',Math.round(Math.min(Math.max(timePct,amtPct),100.0)*10)/10);
+                emit('downloadspeedprogress', fixed)
+            }
             if (done>=todo) {
-                callback(null,totalBytes/diff); //bytes/sec
+                callback(null,speed); //bytes/sec
             } else {
                 next();
             }
@@ -368,12 +373,14 @@ function uploadSpeed(url,sizes,maxTime,callback){
             if (err) {
                 count=0;
             }
-            var diff=process.hrtime(timeStart), timePct,amtPct;
+            var diff=process.hrtime(timeStart), timePct,amtPct,speed,fixed;
             diff=diff[0] + diff[1]*1e-9; //seconds
 
             running--;
             totalBytes+=count;
             done++;
+            speed=totalBytes/diff;
+            fixed=speed*speedTestUploadCorrectionFactor/125000;
 
             timePct=diff/maxTime*100;
             amtPct=done/todo*100;
@@ -382,9 +389,12 @@ function uploadSpeed(url,sizes,maxTime,callback){
             if (diff>maxTime) {
                 done=todo;
             }
-            if (done<=todo) emit('uploadprogress',Math.round(Math.min(Math.max(timePct,amtPct),100.0)*10)/10);
+            if (done<=todo) {
+                emit('uploadprogress',Math.round(Math.min(Math.max(timePct,amtPct),100.0)*10)/10);
+                emit('uploadspeedprogress', fixed)
+            }
             if (done>=todo) {
-                callback(null,totalBytes/diff); //bytes/sec
+                callback(null,speed); //bytes/sec
             } else {
                 next();
             }
@@ -727,6 +737,14 @@ function visualSpeedTest(options,callback){
 
     test.on('uploadspeed',function(speed){
         log('Upload speed: ',speed.toFixed(2)+'Mbps');
+    });
+
+    test.on('downloadspeedprogress',function(speed){
+        log('Download speed (in progress): ',speed.toFixed(2)+'Mbps');
+    });
+
+    test.on('uploadspeedprogress',function(speed){
+        log('Upload speed (in progress): ',speed.toFixed(2)+'Mbps');
     });
 
     test.on('data',function(data){
