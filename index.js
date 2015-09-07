@@ -235,8 +235,16 @@ function pingServer(server,callback){
     var tot=3,done=0,bestTime=3600;
 
     function nextPing(){
-        var start=process.hrtime();
+        var start=process.hrtime(), complete;
+        setTimeout(function(){
+          if(!complete) {
+            complete=true;
+            return callback(new Error("Ping timeout"));
+          }
+        }, 5000);
         getHttp(url.resolve(server.url,'latency.txt'),function(err,data){
+            if (complete) return; // already hit timeout
+            complete=true;
             var diff=process.hrtime(start);
             diff=diff[0] + diff[1]*1e-9; //seconds
             if (!err && data.substr(0,9)!=='test=test') err=new Error('Unknown latency file');
