@@ -237,7 +237,7 @@ function pingServer(server,callback){
     function nextPing(){
         var start=process.hrtime(), complete;
         setTimeout(function(){
-          if(!complete) {
+          if (!complete) {
             complete=true;
             return callback(new Error("Ping timeout"));
           }
