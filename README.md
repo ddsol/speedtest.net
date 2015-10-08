@@ -52,6 +52,7 @@ The options include:
 * `headers` Headers to send to speedtest.net
 * `log` (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
 * `serverId` ID of the server to restrict the tests against.
+* `serversUrl` URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
 
 ## Events
 
