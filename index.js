@@ -452,7 +452,13 @@ function speedTest(options){
         gotData();
     }
 
-    getXML(httpOpts('http://www.speedtest.net/speedtest-servers-static.php'),gotServers);
+
+    var serversUrl = 'http://www.speedtest.net/speedtest-servers-static.php';
+    if (options.serversUrl) {
+        serversUrl = options.serversUrl;
+    }
+
+    getXML(httpOpts(serversUrl), gotServers);
 
     function gotServers(err,servers){
         if (err) return self.emit('error',err);
