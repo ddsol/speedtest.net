@@ -83,7 +83,7 @@ function getHttp(theUrl,discard,callback){
 
     if (typeof options=="string") options=url.parse(options);
 
-    var http=require(options.protocol=='https:'?'https':'http');
+    var http= options.protocol=='https:' ? require('https') : require('http');
     delete options.protocol;
 
     options.headers=options.headers||{};
