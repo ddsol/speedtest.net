@@ -478,7 +478,7 @@ function speedTest(options) {
 
   var self = new EventEmitter()
     , speedInfo = {}
-    , serversUrl = 'http://www.speedtest.net/speedtest-servers-static.php'
+    , serversUrl = 'http://www.speedtest.net/speedtest-servers.php'
     ;
 
   function httpOpts(theUrl) {
