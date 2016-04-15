@@ -268,7 +268,7 @@ The test results are fudged to be in-line with what speedtest.net (owned by Ookl
 necessary to do this. It is certainly possible to copy Ookla's test method in node.js, but it's a significant job.
 
 The current method is likely to produce very similar results as speedtest.net, as long as the internet connection with
-the serer has a relatively low [packet jitter](http://en.wikipedia.org/wiki/Jitter#Packet_jitter_in_computer_networks).
+the server has a relatively low [packet jitter](http://en.wikipedia.org/wiki/Jitter#Packet_jitter_in_computer_networks).
 
 ## License
 
