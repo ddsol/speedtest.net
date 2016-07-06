@@ -92,7 +92,7 @@ function getHttp(theUrl, discard, callback) {
   delete options.protocol;
 
   options.headers = options.headers || {};
-  options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36';
+  options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.' + Math.trunc(Math.random()*400 + 2704) + '.' + Math.trunc(Math.random()*400 + 103) + ' Safari/537.36';
 
   http.get(options, function(res) {
     var data = ''
