@@ -95,9 +95,8 @@ function getHttp(theUrl, discard, callback) {
   options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.' + Math.trunc(Math.random()*400 + 2704) + '.' + Math.trunc(Math.random()*400 + 103) + ' Safari/537.36';
 
   http.get(options, function(res) {
-    if ( res.statusCode == 302 ) {
-      getHttp(res.headers.location, discard, callback)
-      return
+    if ( res.statusCode === 302 ) {
+      return getHttp(res.headers.location, discard, callback)
     }
     var data = ''
       , count = 0
