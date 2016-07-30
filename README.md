@@ -3,7 +3,7 @@ speedtest.net client
 ## Installation
 
 ```bash
-$ npm install speedtest-net
+npm install speedtest-net --save
 ```
 
 ## Usage
@@ -17,26 +17,26 @@ progress bar and optional information output as well.
 
 
 Code use example:
-```javascript
-var speedTest = require('speedtest-net');
+```js
+const speedTest = require('speedtest-net');
 
 test = speedTest({maxTime: 5000});
 
-test.on('data', function(data) {
+test.on('data', data => {
   console.dir(data);
 });
 
-test.on('error', function(err) {
+test.on('error', err => {
   console.error(err);
 });
   
 ```
 
 Visual use example:
-```javascript
-var speedTest = require('speedtest-net');
+```js
+const speedTest = require('speedtest-net');
 
-speedTest.visual({maxTime: 5000}, function(err, data) {
+speedTest.visual({maxTime: 5000}, (err,data) => {
   console.dir(data);
 });
 ```
@@ -67,8 +67,8 @@ Note that if more than 1 server is used for download testing, this
 will run to 100% multiple times.
 
 
-```javascript
-require('speedtest-net')().on('downloadprogress', function(progress) {
+```js
+require('speedtest-net')().on('downloadprogress', progress => {
   console.log('Download progress:', progress);
 });
 ```
@@ -78,8 +78,8 @@ require('speedtest-net')().on('downloadprogress', function(progress) {
 Fired when data is uploaded.
 The progress in percent is passed.
 
-```javascript
-require('speedtest-net')().on('uploadprogress', function(progress) {
+```js
+require('speedtest-net')().on('uploadprogress', progress => {
   console.log('Upload progress:', progress);
 });
 ```
@@ -89,8 +89,8 @@ require('speedtest-net')().on('uploadprogress', function(progress) {
 Fired when an error occurs.
 The error is passed.
 
-```javascript
-require('speedtest-net')().on('error', function(err) {
+```js
+require('speedtest-net')().on('error', err => {
   console.log('Speed test error:');
   console.error(err);
 });
@@ -101,8 +101,8 @@ require('speedtest-net')().on('error', function(err) {
 Fired when the configuration has been fetched from the speedtest server.
 The config is passed.
 
-```javascript
-require('speedtest-net')().on('config', function() {
+```js
+require('speedtest-net')().on('config', => {
   console.log('Configuration info:');
   console.dir(config);
 });
@@ -113,8 +113,8 @@ require('speedtest-net')().on('config', function() {
 Fired when the list of servers has been fetched from the speedtest server.
 The list of server objects is passed.
 
-```javascript
-require('speedtest-net')().on('servers', function(servers) {
+```js
+require('speedtest-net')().on('servers', servers => {
   console.log('Complete list of all available servers:');
   console.dir(servers);
 });
@@ -125,8 +125,8 @@ require('speedtest-net')().on('servers', function(servers) {
 Fired after closest servers are pinged.
 An ordered list of server objects is passed, fastest first.
 
-```javascript
-require('speedtest-net')().on('bestservers', function(servers) {
+```js
+require('speedtest-net')().on('bestservers', servers => {
   console.log('Closest servers:');
   console.dir(servers);
 });
@@ -137,8 +137,8 @@ require('speedtest-net')().on('bestservers', function(servers) {
 Fired before download or upload is started on a server.
 The server object is passed.
 
-```javascript
-require('speedtest-net')().on('testserver', function(server) {
+```js
+require('speedtest-net')().on('testserver', server => {
   console.log('Test server:');
   console.dir(server);
 });
@@ -151,8 +151,8 @@ When testing on multiple servers, it's fired multiple times.
 The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results.
 The associated server is the server passed in the last `testserver` event.
 
-```javascript
-require('speedtest-net')().on('downloadspeed', function(speed) {
+```js
+require('speedtest-net')().on('downloadspeed', speed => {
   console.log('Download speed:', (speed / 1000).toFixed(2), 'KB/s');
 });
 ```
@@ -163,8 +163,8 @@ Fired when the upload speed is found.
 The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results.
 The associated server is the server passed in the last `testserver` event, which will be the fastest server from download test(s).
 
-```javascript
-require('speedtest-net')().on('uploadspeed',function(speed){
+```js
+require('speedtest-net')().on('uploadspeed', speed => {
   console.log('Upload speed:',(speed/1000).toFixed(2),'KB/s');
 });
 ```
@@ -172,8 +172,8 @@ require('speedtest-net')().on('uploadspeed',function(speed){
 ### downloadspeedprogress
 Fired before final download has completed to show download speed in progress, and is fired multiple times. The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results. The associated server is the server passed in the most recent testserver event.
 
-```javascript
-require('speedtest-net')().on('downloadspeedprogress', function(speed) {
+```js
+require('speedtest-net')().on('downloadspeedprogress', speed => {
   console.log('Download speed (in progress):', (speed / 1000).toFixed(2), 'KB/s');
 });
 ```
@@ -181,8 +181,8 @@ require('speedtest-net')().on('downloadspeedprogress', function(speed) {
 ### uploadspeedprogress
 Fired before final download has completed to show upload speed in progress, and is fired multiple times. The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results. The associated server is the server passed in the most recent testserver event.
 
-```javascript
-require('speedtest-net')().on('uploadspeedprogress', function(speed) {
+```js
+require('speedtest-net')().on('uploadspeedprogress', speed => {
   console.log('Upload speed (in progress):', (speed / 1000).toFixed(2), 'KB/s');
 });
 ```
@@ -192,8 +192,8 @@ require('speedtest-net')().on('uploadspeedprogress', function(speed) {
 Fired when the data has been uploaded to SpeedTest.net server.
 The url of the result is passed, or `undefined` on error.
 
-```javascript
-require('speedtest-net')().on('result', function(url) {
+```js
+require('speedtest-net')().on('result', url => {
   if (!url) {
     console.log('Could not successfully post test results.');
   } else {
@@ -208,8 +208,8 @@ require('speedtest-net')().on('result', function(url) {
 Fired when tests are done with all relevant information.
 The data is passed.
 
-```javascript
-require('speedtest-net')().on('data', function(data) {
+```js
+require('speedtest-net')().on('data', data => {
   console.dir(data);
 });
 ```
@@ -253,8 +253,8 @@ Fired when the test are done.
 An object with too much data is passed.
 Note that it is not fired when an error occurs.
 
-```javascript
-require('speedtest-net')().on('done', function(dataOverload) {
+```js
+require('speedtest-net')().on('done', dataOverload => {
   console.log('TL;DR:');
   console.dir(dataOverload);
   console.log('The speed test has completed successfully.');
