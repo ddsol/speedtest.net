@@ -19,8 +19,7 @@ progress bar and optional information output as well.
 Code use example:
 ```js
 const speedTest = require('speedtest-net');
-
-test = speedTest({maxTime: 5000});
+const test = speedTest({maxTime: 5000});
 
 test.on('data', data => {
   console.dir(data);
