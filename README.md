@@ -35,7 +35,7 @@ Visual use example:
 ```js
 const speedTest = require('speedtest-net');
 
-speedTest.visual({maxTime: 5000}, (err,data) => {
+speedTest.visual({maxTime: 5000}, (err, data) => {
   console.dir(data);
 });
 ```
@@ -164,7 +164,7 @@ The associated server is the server passed in the last `testserver` event, which
 
 ```js
 require('speedtest-net')().on('uploadspeed', speed => {
-  console.log('Upload speed:',(speed/1000).toFixed(2),'KB/s');
+  console.log('Upload speed:',(speed / 1000).toFixed(2),'KB/s');
 });
 ```
 
