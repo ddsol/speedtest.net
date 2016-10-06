@@ -481,7 +481,18 @@ function speedTest(options) {
 
   var self = new EventEmitter()
     , speedInfo = {}
-    , serversUrl = 'http://www.speedtest.net/speedtest-servers.php'
+    , serversUrls = [
+        'http://www.speedtest.net/speedtest-servers-static.php',
+        'http://www.speedtest.net/speedtest-servers-static.php?really=yes',
+        'https://www.speedtest.net/speedtest-servers-static.php',
+        'https://www.speedtest.net/speedtest-servers-static.php?really=totally',
+        'http://www.speedtest.net/speedtest-servers.php',
+        'http://www.speedtest.net/speedtest-servers.php?really=sure',
+        'https://www.speedtest.net/speedtest-servers.php',
+        'https://www.speedtest.net/speedtest-servers.php?really=absolutely'
+      ]
+    , curServer = 0
+    , serversUrl
     ;
 
   function httpOpts(theUrl) {
@@ -516,12 +527,26 @@ function speedTest(options) {
 
   if (options.serversUrl) {
     serversUrl = options.serversUrl;
+    curServer = -1;
   }
 
-  getXML(httpOpts(serversUrl), gotServers);
+  function nextServer(err) {
+    if (curServer >= serversUrls.length) {
+      return self.emit('error', err || new Error('There was a problem getting the list of servers from SpeedTest.net. Consider using a custom serversUrl'));
+    }
+    if (curServer < 0) {
+      curServer = serversUrls.length;
+    } else {
+      serversUrl = serversUrls[curServer];
+      curServer++;
+    }
+    getXML(httpOpts(serversUrl), gotServers);
+  }
+
+  nextServer();
 
   function gotServers(err, servers) {
-    if (err) return self.emit('error', err);
+    if (err || !servers) return nextServer(err);
     var s = servers.settings.servers[0].server;
 
     servers = [];
