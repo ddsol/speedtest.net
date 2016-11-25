@@ -47,7 +47,7 @@ You can pass an optional `options` object.
 
 The options include:
 * `maxTime` The maximum length of a single test run (upload or download)
-* `pingCount` The number of close servers to ping to find thew fastest one
+* `pingCount` The number of close servers to ping to find the fastest one
 * `maxServers` The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
 * `headers` Headers to send to speedtest.net
 * `log` (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
