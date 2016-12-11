@@ -152,7 +152,7 @@ The associated server is the server passed in the last `testserver` event.
 
 ```js
 require('speedtest-net')().on('downloadspeed', speed => {
-  console.log('Download speed:', (speed / 1000).toFixed(2), 'KB/s');
+  console.log('Download speed:', (speed * 125).toFixed(2), 'KB/s');
 });
 ```
 
@@ -164,7 +164,7 @@ The associated server is the server passed in the last `testserver` event, which
 
 ```js
 require('speedtest-net')().on('uploadspeed', speed => {
-  console.log('Upload speed:',(speed / 1000).toFixed(2),'KB/s');
+  console.log('Upload speed:',(speed * 125).toFixed(2),'KB/s');
 });
 ```
 
