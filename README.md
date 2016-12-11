@@ -173,7 +173,7 @@ Fired before final download has completed to show download speed in progress, an
 
 ```js
 require('speedtest-net')().on('downloadspeedprogress', speed => {
-  console.log('Download speed (in progress):', (speed / 1000).toFixed(2), 'KB/s');
+  console.log('Download speed (in progress):', (speed * 125).toFixed(2), 'KB/s');
 });
 ```
 
@@ -182,7 +182,7 @@ Fired before final download has completed to show upload speed in progress, and 
 
 ```js
 require('speedtest-net')().on('uploadspeedprogress', speed => {
-  console.log('Upload speed (in progress):', (speed / 1000).toFixed(2), 'KB/s');
+  console.log('Upload speed (in progress):', (speed * 125).toFixed(2), 'KB/s');
 });
 ```
 
