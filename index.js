@@ -507,7 +507,7 @@ function speedTest(options) {
 
   function gotConfig(err, config) {
     if (err) return self.emit('error', err);
-    config = config.settings || {};
+    config = config && config.settings || {};
 
     function get(name) {
       return ((config[name] || [])[0] || {}).$ || {}
