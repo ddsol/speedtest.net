@@ -1,6 +1,6 @@
 # speedtest.net API / CLI tool
 
-![SpeedTest Cli](midia/speedtestcli.gif)
+![SpeedTest Cli](media/speedtestcli.gif)
 
 ## Installation
 

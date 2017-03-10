@@ -819,8 +819,8 @@ function visualSpeedTest(options, callback) {
     log('Testing from ' + client.ip + ' at ' + client.isp + ', expected dl: ' + (client.ispdlavg / 8000).toFixed(2) + 'MB/s, expected ul: ' + (client.ispulavg / 8000).toFixed(2) + 'MB/s');
   });
 
-  var red   = '\u001b[41m \u001b[0m'
-  var green = '\u001b[42m \u001b[0m'
+  var red   = '\u001b[41m \u001b[0m';
+  var green = '\u001b[42m \u001b[0m';
   var size = 50;
 
   function prog(what, pct, spd) {
@@ -832,18 +832,18 @@ function visualSpeedTest(options, callback) {
     
     // What + padding
     barStr += what;
-    barStr += ' '.repeat(12 - what.length)
+    barStr += ' '.repeat(12 - what.length);
 
     // Bar
     barStr += green.repeat(complete);
     barStr += red.repeat(size - complete);
 
     // Percent
-    pct = percentage + '%'
-    barStr += ' ' + pct
+    pct = percentage + '%';
+    barStr += ' ' + pct;
 
     // Speed
-    barStr += ' '.repeat(8 - pct.length) + speed
+    barStr += ' '.repeat(8 - pct.length) + speed;
 
     bar(barStr);
   }
@@ -860,14 +860,14 @@ function visualSpeedTest(options, callback) {
     log('Download speed: ', speed.toFixed(2) + 'Mbps');
 
     // Create a new line after each new download
-    bar = console.draft()
+    bar = console.draft();
   });
 
   test.on('uploadspeed', function(speed) {
     log('Upload speed: ', speed.toFixed(2) + 'Mbps');
-    
+
     // Create a new line after each new upload
-    bar = console.draft()
+    bar = console.draft();
   });
 
   test.on('downloadspeedprogress', function(speed) {
