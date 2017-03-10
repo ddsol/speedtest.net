@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var DraftLog = require('draftlog').into(console).addLineListener(process.stdin)
 var SpeedTestNet = require('../')
 
