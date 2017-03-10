@@ -31,7 +31,6 @@ SOFTWARE.
 var parseXML     = require('xml2js').parseString
   , url          = require('url')
   , EventEmitter = require('events').EventEmitter
-  , DraftLog     = require('draftlog').into(console)
   ;
 
 // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
@@ -787,6 +786,9 @@ function speedTest(options) {
 module.exports = speedTest;
 
 function visualSpeedTest(options, callback) {
+  // We only need chalk and DraftLog here. Lazy load it.
+  var chalk = require('chalk')
+  var DraftLog = require('draftlog').into(console)
 
   callback = once(callback);
 
@@ -819,8 +821,13 @@ function visualSpeedTest(options, callback) {
     log('Testing from ' + client.ip + ' at ' + client.isp + ', expected dl: ' + (client.ispdlavg / 8000).toFixed(2) + 'MB/s, expected ul: ' + (client.ispulavg / 8000).toFixed(2) + 'MB/s');
   });
 
-  var red   = '\u001b[41m \u001b[0m';
-  var green = '\u001b[42m \u001b[0m';
+  if (chalk.supportsColor) {
+    var red   = chalk.bgRed(' ');
+    var green = chalk.bgGreen(' ');
+  } else {
+    var red   = '─';
+    var green = '▇';
+  }
   var size = 50;
 
   function prog(what, pct, spd) {
