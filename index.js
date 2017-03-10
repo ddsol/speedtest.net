@@ -31,7 +31,7 @@ SOFTWARE.
 var parseXML     = require('xml2js').parseString
   , url          = require('url')
   , EventEmitter = require('events').EventEmitter
-  , ProgressBar  = require('progress')
+  , DraftLog     = require('draftlog').into(console)
   ;
 
 // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
@@ -793,7 +793,9 @@ function visualSpeedTest(options, callback) {
   var test = speedTest(options)
     , log  = function() {}
     , finalData
-    , bar
+    , percentage = 0
+    , speed = 0
+    , bar = console.draft()
     ;
 
   if (options.log) {
@@ -817,52 +819,63 @@ function visualSpeedTest(options, callback) {
     log('Testing from ' + client.ip + ' at ' + client.isp + ', expected dl: ' + (client.ispdlavg / 8000).toFixed(2) + 'MB/s, expected ul: ' + (client.ispulavg / 8000).toFixed(2) + 'MB/s');
   });
 
-  function prog(what, pct) {
-    if (pct >= 100) {
-      if (bar) bar.terminate();
-      bar = null;
-      return;
-    }
+  var red   = '\u001b[41m \u001b[0m'
+  var green = '\u001b[42m \u001b[0m'
+  var size = 50;
 
-    if (!bar) {
-      var green = '\u001b[42m \u001b[0m'
-        , red   = '\u001b[41m \u001b[0m'
-        ;
+  function prog(what, pct, spd) {
+    percentage = pct || percentage;
+    speed = spd || speed;  
 
-      bar = new ProgressBar(' ' + what + ' [:bar] :percent', {
-        complete:   green,
-        incomplete: ' ',
-        clear:      true,
-        width:      100,
-        total:      100
-      });
-    }
+    var complete = Math.round(percentage / 100 * size);
+    var barStr = '';
+    
+    // What + padding
+    barStr += what;
+    barStr += ' '.repeat(12 - what.length)
 
-    bar.update(pct / 100);
+    // Bar
+    barStr += green.repeat(complete);
+    barStr += red.repeat(size - complete);
+
+    // Percent
+    pct = percentage + '%'
+    barStr += ' ' + pct
+
+    // Speed
+    barStr += ' '.repeat(8 - pct.length) + speed
+
+    bar(barStr);
   }
 
   test.on('downloadprogress', function(pct) {
-    prog('download', pct);
+    prog('download', pct, null);
   });
 
   test.on('uploadprogress', function(pct) {
-    prog('upload', pct);
+    prog('upload', pct, null);
   });
 
   test.on('downloadspeed', function(speed) {
     log('Download speed: ', speed.toFixed(2) + 'Mbps');
+
+    // Create a new line after each new download
+    bar = console.draft()
   });
 
   test.on('uploadspeed', function(speed) {
     log('Upload speed: ', speed.toFixed(2) + 'Mbps');
+    
+    // Create a new line after each new upload
+    bar = console.draft()
   });
 
   test.on('downloadspeedprogress', function(speed) {
-    log('Download speed (in progress): ', speed.toFixed(2) + 'Mbps');
+    prog('download', null, speed.toFixed(2) + 'Mbps')
   });
 
   test.on('uploadspeedprogress', function(speed) {
-    log('Upload speed (in progress): ', speed.toFixed(2) + 'Mbps');
+    prog('upload', null, speed.toFixed(2) + 'Mbps')
   });
 
   test.on('data', function(data) {
