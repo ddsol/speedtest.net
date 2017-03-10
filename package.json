@@ -3,6 +3,9 @@
   "description": "Speedtest.net client",
   "author": "DDSol",
   "version": "1.2.12",
+  "scripts": {
+    "test": "node test/test"
+  },
   "main": "speedtest.js",
   "repository": {
     "type": "git",
