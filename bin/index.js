@@ -15,7 +15,7 @@ var statuses = {
 }
 
 /*
- * Renders the header and Speeds (one beloow the other)
+ * Renders the header and Speeds (one below the other)
  */
 var halfwidth = 12;
 function updateLines() {
@@ -74,7 +74,7 @@ function updateLines() {
 }
 
 /*
- * Function that return state of Spinner, and change it's state with time
+ * Function that return state of Spinner, and change its state with time
  */
 var frames = ['⠁', '⠂', '⠄', '⡀', '⢀', '⠠', '⠐', '⠈' ];
 var lastChange = 0;
@@ -127,7 +127,7 @@ test.on('uploadspeedprogress', function (speed){
 })
 
 test.once('testserver', function (info){
-  // Round to 1 decimal plate
+  // Round to 1 decimal place
   var title = info.sponsor + ', ' + info.country + ' - ' + info.name;
   title = title + (title.length % 2 == 0 ? '' : ' ');
 
