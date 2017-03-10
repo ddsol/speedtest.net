@@ -1,16 +1,7 @@
 #!/usr/bin/env node
 var DraftLog = require('draftlog').into(console).addLineListener(process.stdin);
+var chalk = require('chalk');
 var SpeedTestNet = require('../');
-
-/*
- * Simple ANSI escape commands for Collors
- */
-const DIM = '\033[2m';
-const BLUE = '\033[34m';
-const CYAN = '\033[36m';
-const RESET = '\033[0m';
-const WHITE = '\033[37m';
-const YELLOW = '\033[33m';
 
 /*
  * Keep track of current UI State
@@ -42,9 +33,9 @@ function updateLines() {
 
     // Set header status color
     if (status === false) {
-      col = DIM + col + RESET;
+      col = chalk.dim(col);
     } else {
-      col = WHITE + col + RESET;
+      col = chalk.white(col);
     }
 
     headerTxt += col;
@@ -67,7 +58,13 @@ function updateLines() {
 
     // Create status text
     var spacing = ' '.repeat(halfwidth - status.length / 2);
-    var txt = spacing + (step == k ? YELLOW : BLUE) + status + spacing + RESET;
+
+    // If it's the current step, show as yellow
+    if (step == k) {
+      var txt = spacing + chalk.yellow(status) + spacing;
+    } else {
+      var txt = spacing + chalk.blue(status) + spacing;
+    }
 
     speedsTxt += txt;
   }
@@ -135,7 +132,7 @@ test.once('testserver', function (info){
   title = title + (title.length % 2 == 0 ? '' : ' ');
 
   var fill = ' '.repeat(halfwidth * 3 - title.length / 2);
-  location('│' + fill + YELLOW + title + RESET + fill + '│');
+  location('│' + fill + chalk.yellow(title) + fill + '│');
   
   var ping = Math.round(info.bestPing * 10) / 10;
   statuses.Ping = ping + ' ms';
@@ -162,3 +159,10 @@ function speedText(speed, notFinished) {
 test.on('done', function () {
   process.exit();
 })
+
+test.on('error', err => {
+  console.log();
+  console.error(chalk.red(err));
+  console.log();
+  process.exit();
+});
