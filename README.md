@@ -1,9 +1,17 @@
-speedtest.net client
+# speedtest.net API / CLI tool
+
+![SpeedTest Cli](media/speedtestcli.gif)
 
 ## Installation
 
 ```bash
-npm install speedtest-net --save
+npm install --save speedtest-net
+```
+
+## Command-Line Tool
+```bash
+$ npm install --global speedtest-net
+$ speedtest-net
 ```
 
 ## Usage

@@ -3,13 +3,18 @@
   "description": "Speedtest.net client",
   "author": "DDSol",
   "version": "1.2.12",
+  "scripts": {
+    "test": "node test/test"
+  },
+  "bin": "bin/index.js",
   "main": "speedtest.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/ddsol/speedtest.net.git"
   },
   "dependencies": {
-    "progress": "^1.1.8",
+    "chalk": "^1.1.3",
+    "draftlog": "^1.0.12",
     "xml2js": "^0.4.4"
   }
 }
