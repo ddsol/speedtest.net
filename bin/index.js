@@ -132,7 +132,12 @@ function speedText(speed) {
 /*
  * Function that return state of Spinner, and change its state with time
  */
-var frames = ['⠁', '⠂', '⠄', '⡀', '⢀', '⠠', '⠐', '⠈' ];
+var frames = [
+  '⠂⠁⠂⠄',
+  '⠄⠂⠁⠂',
+  '⠂⠄⠂⠁',
+  '⠁⠂⠄⠂',
+];
 var lastChange = 0;
 function Spinner(){
   if (Date.now() > lastChange + 30) {
@@ -164,7 +169,7 @@ updateLines();
  * Start speed test
  */
 var test = SpeedTestNet({maxTime: 10000});
-var interval = setInterval(updateLines, 60);
+var interval = setInterval(updateLines, 100);
 var completedUpload = false;
 var completedDownload = false;
 
