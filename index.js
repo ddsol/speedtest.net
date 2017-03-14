@@ -787,8 +787,8 @@ module.exports = speedTest;
 
 function visualSpeedTest(options, callback) {
   // We only need chalk and DraftLog here. Lazy load it.
-  var chalk = require('chalk')
-  var DraftLog = require('draftlog').into(console)
+  var chalk = require('chalk');
+  require('draftlog').into(console);
 
   callback = once(callback);
 
@@ -821,14 +821,9 @@ function visualSpeedTest(options, callback) {
     log('Testing from ' + client.ip + ' at ' + client.isp + ', expected dl: ' + (client.ispdlavg / 8000).toFixed(2) + 'MB/s, expected ul: ' + (client.ispulavg / 8000).toFixed(2) + 'MB/s');
   });
 
-  if (chalk.supportsColor) {
-    var red   = chalk.bgRed(' ');
-    var green = chalk.bgGreen(' ');
-  } else {
-    var red   = '─';
-    var green = '▇';
-  }
   var size = 50;
+  var red = (chalk.supportsColor ? chalk.bgRed(' ') : '─');
+  var green = (chalk.supportsColor ? chalk.bgGreen(' ') : '▇');
 
   function prog(what, pct, spd) {
     percentage = pct || percentage;
