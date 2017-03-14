@@ -133,10 +133,12 @@ function speedText(speed) {
  * Function that return state of Spinner, and change its state with time
  */
 var frames = [
-  '⠂⠁⠂⠄',
-  '⠄⠂⠁⠂',
-  '⠂⠄⠂⠁',
-  '⠁⠂⠄⠂',
+  '+---',
+  '-+--',
+  '--+-',
+  '---+',
+  '--+-',
+  '-+--',
 ];
 var lastChange = 0;
 function Spinner(){
