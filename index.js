@@ -102,7 +102,6 @@ function getHttp(theUrl, discard, callback) {
       ;
 
     if (!discard) res.setEncoding('utf8');
-    res.on('error', callback);
     res.on('data', function(newData) {
       count += newData.length;
       if (!discard) data += newData;
@@ -143,7 +142,6 @@ function postHttp(theUrl, data, callback) {
   req = http.request(options, function(res) {
     var data = '';
     res.setEncoding('utf8');
-    res.on('error', callback);
     res.on('data', function(newData) {
       data += newData;
     });
@@ -197,13 +195,12 @@ function randomPutHttp(theUrl, size, callback) {
 
   var req = http.request(options, function(res) {
     var data = '';
-    res.on('error', callback);
     res.on('data', function(newData) {
       //discard
     });
     res.on('end', function() {
       //discard data
-      callback(null, size); //return original size
+      callback(null, size, res.statusCode); //return original size
     });
   });
 
@@ -353,7 +350,10 @@ function downloadSpeed(urls, maxTime, callback) {
 
     started++;
 
-    getHttp(url, true, function(err, count) { //discard all data and return byte count
+    getHttp(url, true, function(err, count, status) { //discard all data and return byte count
+      if (err || status !== 200) {
+        count = 0;
+      }
       var diff = process.hrtime(timeStart)
         , timePct
         , amtPct
@@ -428,9 +428,9 @@ function uploadSpeed(url, sizes, maxTime, callback) {
     started++;
     //started=(started+1) % todo; //Keep staing more until the time is up...
 
-    randomPutHttp(url, size, function(err, count) { //discard all data and return byte count
+    randomPutHttp(url, size, function(err, count, status) { //discard all data and return byte count
       if (done >= todo) return;
-      if (err) {
+      if (err || status !== 200) {
         count = 0;
       }
       var diff = process.hrtime(timeStart)
