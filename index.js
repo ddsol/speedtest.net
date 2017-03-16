@@ -202,8 +202,8 @@ function randomPutHttp(theUrl, size, callback) {
       //discard
     });
     res.on('end', function() {
-      //discard data
-      callback(null, size); //return original size
+      // Some cases (like HTTP 413) will interrupt the upload, but still return a response
+      callback(null, size - toSend);
     });
   });
 
