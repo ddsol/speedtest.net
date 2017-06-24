@@ -14,6 +14,11 @@ console.dump=function(){
   console.log(s.join(' '));
 }
 
-speedTest.visual({maxTime:10000,log:true,maxServers:4},function(err,data){
+speedTest.visual({
+  maxTime: 10000,
+  log: true,
+  maxServers: 4,
+  configUrl: 'http://www.speedtest.net/speedtest-config.php',
+}, function(err, data) {
   console.dump(data);
 });
