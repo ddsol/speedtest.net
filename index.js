@@ -502,7 +502,7 @@ function speedTest(options) {
 
   //Fetch config
 
-  getXML(httpOpts('http://www.speedtest.net/speedtest-config.php'), gotConfig);
+  getXML(httpOpts(options.configUrl || 'http://www.speedtest.net/speedtest-config.php'), gotConfig);
 
   function gotConfig(err, config) {
     if (err) return self.emit('error', err);

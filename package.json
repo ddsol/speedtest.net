@@ -1,8 +1,11 @@
 {
-  "name": "speedtest-net",
+  "name": "@opstalent/speedtest.net",
   "description": "Speedtest.net client",
   "author": "DDSol",
-  "version": "1.3.1",
+  "contributors": [
+    "Patryk Grudniewski <patgrudniewski@gmail.com>"
+  ],
+  "version": "1.0.0",
   "scripts": {
     "test": "node test/test"
   },
@@ -10,7 +13,7 @@
   "main": "speedtest.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ddsol/speedtest.net.git"
+    "url": "https://github.com/opstalent/speedtest.net.git"
   },
   "dependencies": {
     "chalk": "^1.1.3",
