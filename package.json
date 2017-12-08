@@ -7,7 +7,7 @@
     "test": "node test/test"
   },
   "bin": "bin/index.js",
-  "main": "speedtest.js",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/ddsol/speedtest.net.git"
