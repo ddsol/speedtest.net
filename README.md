@@ -114,9 +114,9 @@ test.on('error', err => {
   
 ```
 ### Proxy priority
-1 - proxy by options
-2 - proxy by HTTP_PROXY env var
-3 - proxy by HTTPS_PROXY env var
+ * `proxy by options`
+ * `proxy by HTTP_PROXY env var`
+ * `proxy by HTTPS_PROXY env var`
 
 
 ## Events
