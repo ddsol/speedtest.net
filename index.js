@@ -31,12 +31,48 @@ SOFTWARE.
 var parseXML     = require('xml2js').parseString
   , url          = require('url')
   , EventEmitter = require('events').EventEmitter
+  , HttpProxyAgent = require('http-proxy-agent')
+  , HttpsProxyAgent = require('https-proxy-agent')
   ;
 
 // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
 var speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
   ;
+
+// search a proxy (http|https) in env with case-insensitive
+var proxyHttpEnv = findPropertiesInEnvInsensitive("HTTP_PROXY");
+var proxysHttpEnv = findPropertiesInEnvInsensitive("HTTPS_PROXY");
+
+function findPropertiesInEnvInsensitive(prop) {
+	prop = (prop + "").toLowerCase();
+	for(var p in process.env){
+	 if(process.env.hasOwnProperty(p) && prop == (p+ "").toLowerCase()){
+		   return process.env[p];
+	  }
+	}
+	return null;
+}
+
+//set the proxy agent for each http request
+function proxy(options) {
+	if (options.protocol == 'https:')
+	{
+		if (proxyHttpsEnv == null)
+		{
+			var agent = new HttpProxyAgent(proxyHttpEnv);
+			options.agent = agent;
+		} else {
+			var agent = new HttpsProxyAgent(proxyHttpsEnv);
+			options.agent = agent;
+		}
+	} else {
+		var agent = new HttpProxyAgent(proxyHttpEnv);
+		options.agent = agent;
+	}
+	
+   
+}
 
 function once(callback) {
   if (typeof callback !== "function") {
@@ -88,6 +124,7 @@ function getHttp(theUrl, discard, callback) {
   if (typeof options == "string") options = url.parse(options);
 
   var http = options.protocol == 'https:' ? require('https') : require('http');
+  proxy(options);
   delete options.protocol;
 
   options.headers = options.headers || {};
@@ -138,6 +175,7 @@ function postHttp(theUrl, data, callback) {
   options.method = "POST";
 
   http = require(options.protocol == 'https:' ? 'https' : 'http');
+  proxy(options);
   delete options.protocol;
 
   req = http.request(options, function(res) {
@@ -192,7 +230,7 @@ function randomPutHttp(theUrl, size, callback) {
   }());
 
   http = options.protocol == 'https:' ? require('https') : require('http');
-
+  proxy(options);
   delete options.protocol;
 
   var req = http.request(options, function(res) {
