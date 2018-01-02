@@ -61,6 +61,28 @@ The options include:
 * `serverId` ID of the server to restrict the tests against.
 * `serversUrl` URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
 
+## Proxy
+
+You can set proxy with env var
+
+Code use example:
+```js
+process.env["HTTP_PROXY"] =  process.env["http_proxy"] = "http://proxy:3128";
+//process.env["HTTPS_PROXY"] = process.env["https_proxy"] = "https://proxy:3128";
+
+const speedTest = require('speedtest-net');
+const test = speedTest({maxTime: 5000});
+
+test.on('data', data => {
+  console.dir(data);
+});
+
+test.on('error', err => {
+  console.error(err);
+});
+  
+```
+
 ## Events
 
 There are a number of events available during the test:
