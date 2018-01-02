@@ -40,38 +40,74 @@ var speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
   ;
 
-// search a proxy (http|https) in env with case-insensitive
+// 	Proxy by parameter
+var proxyOptions = null;
+
+// Search a proxy (http|https) in env with case-insensitive
 var proxyHttpEnv = findPropertiesInEnvInsensitive("HTTP_PROXY");
-var proxysHttpEnv = findPropertiesInEnvInsensitive("HTTPS_PROXY");
+var proxyHttpsEnv = findPropertiesInEnvInsensitive("HTTPS_PROXY");
 
 function findPropertiesInEnvInsensitive(prop) {
-	prop = (prop + "").toLowerCase();
-	for(var p in process.env){
-	 if(process.env.hasOwnProperty(p) && prop == (p+ "").toLowerCase()){
-		   return process.env[p];
-	  }
-	}
-	return null;
+    prop = (prop + "").toLowerCase();
+    for(var p in process.env){
+        if(process.env.hasOwnProperty(p) && prop == (p+ "").toLowerCase()){
+            return process.env[p];
+        }
+    }
+    return null;
 }
 
 //set the proxy agent for each http request
+// priority : 
+// 1 - proxyOptions
+// 2 - proxyHttpEnv (HTTP_PROXY)
+// 3 - proxyHttpsEnv (HTTPS_PROXY)
 function proxy(options) {
-	if (options.protocol == 'https:')
-	{
-		if (proxyHttpsEnv == null)
-		{
-			var agent = new HttpProxyAgent(proxyHttpEnv);
-			options.agent = agent;
-		} else {
-			var agent = new HttpsProxyAgent(proxyHttpsEnv);
-			options.agent = agent;
+    if (proxyHttpEnv == null && proxyHttpsEnv == null && proxyOptions == null)
+    {
+        return;
+    }
+    var proxy = null;
+    var isSSL = false;
+    var haveHttp = false;
+	// Test the proxy parameter first for priority
+    if (proxyOptions != null)
+    {
+        if (proxyOptions.startsWith("https:")) {
+            isSSL = true
+        }
+        proxy = proxyOptions;
+    }
+    else {
+	// Test proxy by env
+        proxy = proxyHttpEnv;
+		if (proxyHttpEnv != null) {
+			//for support https in HTTP_PROXY env var
+			if (proxyHttpEnv.startsWith("https:"))
+			{
+				isSSL = true
+			} else {
+				haveHttp = true;
+			}
+
+		} else if (proxyHttpsEnv != null) {
+			isSSL = true
+			proxy = proxyHttpsEnv;
 		}
-	} else {
-		var agent = new HttpProxyAgent(proxyHttpEnv);
-		options.agent = agent;
-	}
-	
-   
+        // for http priority
+        if (proxyHttpEnv != null && !proxyHttpEnv.startsWith("https:")) {
+            haveHttp = true;
+        }
+    }
+
+    if (isSSL == false || haveHttp == true) {
+        var agent = new HttpProxyAgent(proxy);
+        options.agent = agent;
+    } else {
+        var agent = new HttpsProxyAgent(proxy);
+        options.agent = agent;
+    }
+
 }
 
 function once(callback) {
@@ -512,10 +548,12 @@ function speedTest(options) {
 
   options = options || {};
 
+  options.proxy = options.proxy || null;
   options.maxTime = options.maxTime || 10000;
   options.pingCount = options.pingCount || (options.serverId ? 1 : 5);
   options.maxServers = options.maxServers || 1;
 
+  proxyOptions = options.proxy;
   var self = new EventEmitter()
     , speedInfo = {}
     , serversUrls = [

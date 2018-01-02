@@ -53,6 +53,7 @@ speedTest.visual({maxTime: 5000}, (err, data) => {
 You can pass an optional `options` object.
 
 The options include:
+* `proxy` The proxy for upload or download, support http and https (example : "http://proxy:3128")
 * `maxTime` The maximum length of a single test run (upload or download)
 * `pingCount` The number of close servers to ping to find the fastest one
 * `maxServers` The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
@@ -61,11 +62,18 @@ The options include:
 * `serverId` ID of the server to restrict the tests against.
 * `serversUrl` URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
 
-## Proxy
+## Proxy by env
 
-You can set proxy with env var
+### You can set proxy with env var
 
-Code use example:
+Code use example for cli:
+```bash
+$ npm install --global speedtest-net
+$ set HTTP_PROXY=http://proxy:3128
+$ speedtest-net
+```
+
+Code use example for node:
 ```js
 process.env["HTTP_PROXY"] =  process.env["http_proxy"] = "http://proxy:3128";
 //process.env["HTTPS_PROXY"] = process.env["https_proxy"] = "https://proxy:3128";
@@ -82,6 +90,34 @@ test.on('error', err => {
 });
   
 ```
+
+### You can set proxy by options
+
+Code use example for cli:
+```bash
+$ npm install --global speedtest-net
+$ speedtest-net --proxy "http://proxy:3128"
+```
+
+Code use example for node:
+```js
+const speedTest = require('speedtest-net');
+const test = speedTest({maxTime: 5000, proxy : "http://proxy:3128"});
+
+test.on('data', data => {
+  console.dir(data);
+});
+
+test.on('error', err => {
+  console.error(err);
+});
+  
+```
+### Proxy priority
+1 - proxy by options
+2 - proxy by HTTP_PROXY env var
+3 - proxy by HTTPS_PROXY env var
+
 
 ## Events
 

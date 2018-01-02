@@ -170,7 +170,40 @@ updateLines();
 /*
  * Start speed test
  */
-var test = SpeedTestNet({maxTime: 10000});
+ 
+ 
+var options = {
+    maxTime: 10000,
+    proxy : null,
+}
+
+/*
+ * get parameters
+ */
+var errorParameter = null;
+process.argv.forEach(function (val, index, array) {
+    if (index >= 2) {
+        if (val.startsWith("--proxy")) {
+            if (array[index + 1] != undefined) {
+                options.proxy = array[index + 1];
+            } else {
+                errorParameter = "Error: bad parameters";
+            }
+        }
+    }
+});
+
+/*
+ * interrupt if error (parameters)
+ */
+if (errorParameter != null) {
+    console.log();
+    console.error(chalk.red(errorParameter));
+    console.log();
+    process.exit(1);
+}
+
+var test = SpeedTestNet(options);
 var interval = setInterval(updateLines, 100);
 var completedUpload = false;
 var completedDownload = false;
