@@ -26,8 +26,8 @@ progress bar and optional information output as well.
 
 Code use example:
 ```js
-const speedTest = require('speedtest-net');
-const test = speedTest({maxTime: 5000});
+var speedTest = require('speedtest-net');
+var test = speedTest({maxTime: 5000});
 
 test.on('data', data => {
   console.dir(data);
@@ -41,7 +41,7 @@ test.on('error', err => {
 
 Visual use example:
 ```js
-const speedTest = require('speedtest-net');
+var speedTest = require('speedtest-net');
 
 speedTest.visual({maxTime: 5000}, (err, data) => {
   console.dir(data);
@@ -78,8 +78,8 @@ Code use example for node:
 process.env["HTTP_PROXY"] =  process.env["http_proxy"] = "http://proxy:3128";
 //process.env["HTTPS_PROXY"] = process.env["https_proxy"] = "https://proxy:3128";
 
-const speedTest = require('speedtest-net');
-const test = speedTest({maxTime: 5000});
+var speedTest = require('speedtest-net');
+var test = speedTest({maxTime: 5000});
 
 test.on('data', data => {
   console.dir(data);
@@ -101,8 +101,8 @@ $ speedtest-net --proxy "http://proxy:3128"
 
 Code use example for node:
 ```js
-const speedTest = require('speedtest-net');
-const test = speedTest({maxTime: 5000, proxy : "http://proxy:3128"});
+var speedTest = require('speedtest-net');
+var test = speedTest({maxTime: 5000, proxy : "http://proxy:3128"});
 
 test.on('data', data => {
   console.dir(data);
