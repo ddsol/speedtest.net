@@ -46,13 +46,13 @@ var proxyHttpEnv = findPropertiesInEnvInsensitive("HTTP_PROXY");
 var proxyHttpsEnv = findPropertiesInEnvInsensitive("HTTPS_PROXY");
 
 function findPropertiesInEnvInsensitive(prop) {
-    prop = (prop).toLowerCase();
-    for (var p in process.env) {
-        if (process.env.hasOwnProperty(p) && prop == (p).toLowerCase()) {
-            return process.env[p];
-        }
+  prop = (prop).toLowerCase();
+  for (var p in process.env) {
+    if (process.env.hasOwnProperty(p) && prop == (p).toLowerCase()) {
+      return process.env[p];
     }
-    return null;
+  }
+  return null;
 }
 
 //set the proxy agent for each http request
@@ -61,51 +61,49 @@ function findPropertiesInEnvInsensitive(prop) {
 // 2 - proxyHttpEnv (HTTP_PROXY)
 // 3 - proxyHttpsEnv (HTTPS_PROXY)
 function proxy(options) {
-    var proxy = null;
-    var isSSL = false;
-    var haveHttp = false;
-    var agent = null;
-	
-    if (!proxyHttpEnv && !proxyHttpsEnv && !proxyOptions) {
-        return;
+  var proxy = null;
+  var isSSL = false;
+  var haveHttp = false;
+  var agent = null;
+  
+  if (!proxyHttpEnv && !proxyHttpsEnv && !proxyOptions) {
+    return;
+  }
+  // Test the proxy parameter first for priority
+  if (proxyOptions)
+  {
+    if (proxyOptions.startsWith("https:")) {
+      isSSL = true
     }
-    // Test the proxy parameter first for priority
-    if (proxyOptions)
-    {
-        if (proxyOptions.startsWith("https:")) {
-            isSSL = true
-        }
-        proxy = proxyOptions;
+    proxy = proxyOptions;
+  }
+  else {
+    // Test proxy by env
+    proxy = proxyHttpEnv;
+    if (proxyHttpEnv) {
+      //for support https in HTTP_PROXY env var
+      if (proxyHttpEnv.startsWith("https:")) {
+        isSSL = true
+      } else {
+        haveHttp = true;
+      }
+    } else if (proxyHttpsEnv) {
+      isSSL = true
+      proxy = proxyHttpsEnv;
     }
-    else {
-	// Test proxy by env
-        proxy = proxyHttpEnv;
-	if (proxyHttpEnv) {
-		//for support https in HTTP_PROXY env var
-		if (proxyHttpEnv.startsWith("https:")) {
-			isSSL = true
-		} else {
-			haveHttp = true;
-		}
-
-	} else if (proxyHttpsEnv) {
-		isSSL = true
-		proxy = proxyHttpsEnv;
-	}
-        // for http priority
-        if (proxyHttpEnv && !proxyHttpEnv.startsWith("https:")) {
-            haveHttp = true;
-        }
+    // for http priority
+    if (proxyHttpEnv && !proxyHttpEnv.startsWith("https:")) {
+      haveHttp = true;
     }
-
-    if (!isSSL || haveHttp) {
-        agent = new HttpProxyAgent(proxy);
-        options.agent = agent;
-    } else {
-        agent = new HttpsProxyAgent(proxy);
-        options.agent = agent;
-    }
-
+  }
+  
+  if (!isSSL || haveHttp) {
+    agent = new HttpProxyAgent(proxy);
+    options.agent = agent;
+  } else {
+    agent = new HttpsProxyAgent(proxy);
+    options.agent = agent;
+  }
 }
 
 function once(callback) {
