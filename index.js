@@ -64,7 +64,6 @@ function proxy(options) {
   var proxy = null;
   var isSSL = false;
   var haveHttp = false;
-  var agent = null;
   
   if (!proxyHttpEnv && !proxyHttpsEnv && !proxyOptions) {
     return;
@@ -98,11 +97,9 @@ function proxy(options) {
   }
   
   if (!isSSL || haveHttp) {
-    agent = new HttpProxyAgent(proxy);
-    options.agent = agent;
+    options.agent = new HttpProxyAgent(proxy);
   } else {
-    agent = new HttpsProxyAgent(proxy);
-    options.agent = agent;
+    options.agent = new HttpsProxyAgent(proxy);
   }
 }
 
