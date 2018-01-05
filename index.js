@@ -31,12 +31,75 @@ SOFTWARE.
 var parseXML     = require('xml2js').parseString
   , url          = require('url')
   , EventEmitter = require('events').EventEmitter
+  , HttpProxyAgent = require('http-proxy-agent')
+  , HttpsProxyAgent = require('https-proxy-agent')
   ;
 
 // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
 var speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
+  , proxyOptions = null
+  , proxyHttpEnv = findPropertiesInEnvInsensitive("HTTP_PROXY")
+  , proxyHttpsEnv = findPropertiesInEnvInsensitive("HTTPS_PROXY")
   ;
+
+function findPropertiesInEnvInsensitive(prop) {
+  prop = prop.toLowerCase();
+  for (var p in process.env) {
+    if (process.env.hasOwnProperty(p) && prop == p.toLowerCase()) {
+      return process.env[p];
+    }
+  }
+  return null;
+}
+
+//set the proxy agent for each http request
+// priority : 
+// 1 - proxyOptions
+// 2 - proxyHttpEnv (HTTP_PROXY)
+// 3 - proxyHttpsEnv (HTTPS_PROXY)
+function proxy(options) {
+  var proxy = null
+  , isSSL = false
+  , haveHttp = false;
+  
+  if (!proxyHttpEnv && !proxyHttpsEnv && !proxyOptions) {
+    return;
+  }
+  // Test the proxy parameter first for priority
+  if (proxyOptions)
+  {
+    if (proxyOptions.substr(0, 6) === "https:") {
+      isSSL = true;
+    }
+    proxy = proxyOptions;
+  }
+  else {
+    // Test proxy by env
+    proxy = proxyHttpEnv;
+    if (proxyHttpEnv) {
+      //for support https in HTTP_PROXY env var
+      if (proxyHttpEnv.substr(0, 6) === "https:") {
+        isSSL = true;
+      } else {
+        haveHttp = true;
+      }
+    } else if (proxyHttpsEnv) {
+      isSSL = true;
+      proxy = proxyHttpsEnv;
+    }
+    // for http priority
+    if (proxyHttpEnv && proxyHttpEnv.substr(0, 6) !== "https:") {
+      haveHttp = true;
+    }
+  }
+  
+  if (!isSSL || haveHttp) {
+    options.agent = new HttpProxyAgent(proxy);
+  } else {
+    options.agent = new HttpsProxyAgent(proxy);
+  }
+}
 
 function once(callback) {
   if (typeof callback !== "function") {
@@ -88,6 +151,7 @@ function getHttp(theUrl, discard, callback) {
   if (typeof options == "string") options = url.parse(options);
 
   var http = options.protocol == 'https:' ? require('https') : require('http');
+  proxy(options);
   delete options.protocol;
 
   options.headers = options.headers || {};
@@ -138,6 +202,7 @@ function postHttp(theUrl, data, callback) {
   options.method = "POST";
 
   http = require(options.protocol == 'https:' ? 'https' : 'http');
+  proxy(options);
   delete options.protocol;
 
   req = http.request(options, function(res) {
@@ -192,7 +257,7 @@ function randomPutHttp(theUrl, size, callback) {
   }());
 
   http = options.protocol == 'https:' ? require('https') : require('http');
-
+  proxy(options);
   delete options.protocol;
 
   var req = http.request(options, function(res) {
@@ -474,10 +539,12 @@ function speedTest(options) {
 
   options = options || {};
 
+  options.proxy = options.proxy || null;
   options.maxTime = options.maxTime || 10000;
   options.pingCount = options.pingCount || (options.serverId ? 1 : 5);
   options.maxServers = options.maxServers || 1;
 
+  proxyOptions = options.proxy;
   var self = new EventEmitter()
     , speedInfo = {}
     , serversUrls = [
