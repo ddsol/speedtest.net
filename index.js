@@ -33,20 +33,18 @@ var parseXML     = require('xml2js').parseString
   , EventEmitter = require('events').EventEmitter
   , HttpProxyAgent = require('http-proxy-agent')
   , HttpsProxyAgent = require('https-proxy-agent')
-  ;
-
-// These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
-var speedTestDownloadCorrectionFactor = 1.135
+  // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
+  , speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
   , proxyOptions = null
-  , proxyHttpEnv = findPropertiesInEnvInsensitive("HTTP_PROXY")
-  , proxyHttpsEnv = findPropertiesInEnvInsensitive("HTTPS_PROXY")
+  , proxyHttpEnv = findPropertiesInEnvInsensitive('HTTP_PROXY')
+  , proxyHttpsEnv = findPropertiesInEnvInsensitive('HTTPS_PROXY')
   ;
 
 function findPropertiesInEnvInsensitive(prop) {
   prop = prop.toLowerCase();
   for (var p in process.env) {
-    if (process.env.hasOwnProperty(p) && prop == p.toLowerCase()) {
+    if (process.env.hasOwnProperty(p) && prop === p.toLowerCase()) {
       return process.env[p];
     }
   }
@@ -54,32 +52,31 @@ function findPropertiesInEnvInsensitive(prop) {
 }
 
 //set the proxy agent for each http request
-// priority : 
+// priority :
 // 1 - proxyOptions
 // 2 - proxyHttpEnv (HTTP_PROXY)
 // 3 - proxyHttpsEnv (HTTPS_PROXY)
 function proxy(options) {
   var proxy = null
-  , isSSL = false
-  , haveHttp = false;
-  
+    , isSSL = false
+    , haveHttp = false
+    ;
+
   if (!proxyHttpEnv && !proxyHttpsEnv && !proxyOptions) {
     return;
   }
   // Test the proxy parameter first for priority
-  if (proxyOptions)
-  {
-    if (proxyOptions.substr(0, 6) === "https:") {
+  if (proxyOptions) {
+    if (proxyOptions.substr(0, 6) === 'https:') {
       isSSL = true;
     }
     proxy = proxyOptions;
-  }
-  else {
+  } else {
     // Test proxy by env
     proxy = proxyHttpEnv;
     if (proxyHttpEnv) {
       //for support https in HTTP_PROXY env var
-      if (proxyHttpEnv.substr(0, 6) === "https:") {
+      if (proxyHttpEnv.substr(0, 6) === 'https:') {
         isSSL = true;
       } else {
         haveHttp = true;
@@ -89,11 +86,11 @@ function proxy(options) {
       proxy = proxyHttpsEnv;
     }
     // for http priority
-    if (proxyHttpEnv && proxyHttpEnv.substr(0, 6) !== "https:") {
+    if (proxyHttpEnv && proxyHttpEnv.substr(0, 6) !== 'https:') {
       haveHttp = true;
     }
   }
-  
+
   if (!isSSL || haveHttp) {
     options.agent = new HttpProxyAgent(proxy);
   } else {
@@ -102,7 +99,7 @@ function proxy(options) {
 }
 
 function once(callback) {
-  if (typeof callback !== "function") {
+  if (typeof callback !== 'function') {
     callback = function() {};
   }
   return function() {
@@ -110,15 +107,10 @@ function once(callback) {
       callback.apply(this, arguments);
       callback = null;
     }
-  }
+  };
 }
 
 function distance(origin, destination) {
-
-  function deg2rad(d) {
-    return d / 180 * Math.PI;
-  }
-
   var lat1   = origin.lat
     , lon1   = origin.lon
     , lat2   = destination.lat
@@ -134,10 +126,17 @@ function distance(origin, destination) {
   c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return radius * c;
+
+  function deg2rad(d) {
+    return d / 180 * Math.PI;
+  }
 }
 
 
 function getHttp(theUrl, discard, callback) {
+  var http
+    , options
+    ;
 
   if (!callback) {
     callback = discard;
@@ -146,20 +145,20 @@ function getHttp(theUrl, discard, callback) {
 
   callback = once(callback);
 
-  var options = theUrl;
+  options = theUrl;
 
-  if (typeof options == "string") options = url.parse(options);
+  if (typeof options === 'string') options = url.parse(options);
 
-  var http = options.protocol == 'https:' ? require('https') : require('http');
+  http = options.protocol === 'https:' ? require('https') : require('http');
   proxy(options);
   delete options.protocol;
 
   options.headers = options.headers || {};
-  options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.' + Math.trunc(Math.random()*400 + 2704) + '.' + Math.trunc(Math.random()*400 + 103) + ' Safari/537.36';
+  options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.' + Math.trunc(Math.random() * 400 + 2704) + '.' + Math.trunc(Math.random() * 400 + 103) + ' Safari/537.36';
 
   http.get(options, function(res) {
-    if ( res.statusCode === 302 ) {
-      return getHttp(res.headers.location, discard, callback)
+    if (res.statusCode === 302) {
+      return getHttp(res.headers.location, discard, callback);
     }
     var data = ''
       , count = 0
@@ -176,11 +175,9 @@ function getHttp(theUrl, discard, callback) {
       callback(null, data, res.statusCode);
     });
   }).on('error', callback);
-
 }
 
 function postHttp(theUrl, data, callback) {
-
   if (!callback) {
     callback = data;
     data = '';
@@ -193,15 +190,15 @@ function postHttp(theUrl, data, callback) {
     , req
     ;
 
-  if (typeof options == "string") options = url.parse(options);
+  if (typeof options === 'string') options = url.parse(options);
 
   options.headers = options.headers || {};
   options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0';
   options.headers['content-type'] = 'application/x-www-form-urlencoded';
   options.headers['content-length'] = data.length;
-  options.method = "POST";
+  options.method = 'POST';
 
-  http = require(options.protocol == 'https:' ? 'https' : 'http');
+  http = require(options.protocol === 'https:' ? 'https' : 'http');
   proxy(options);
   delete options.protocol;
 
@@ -220,32 +217,33 @@ function postHttp(theUrl, data, callback) {
   req.on('error', callback);
 
   req.end(data);
-
 }
 
 function randomPutHttp(theUrl, size, callback) {
   callback = once(callback);
 
-  size = (size || 131072) | 0;
+  size = (size || 131072) | 0; //eslint-disable-line no-bitwise
 
   var options = theUrl
     , headers = {
-        'user-agent':     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0',
-        'content-length': size
-      }
+      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0',
+      'content-length': size
+    }
     , toSend  = size
     , sent1   = false
     , dataBlock
     , http
+    , headerName
+    , request
     ;
 
-  if (typeof options === "string") options = url.parse(theUrl);
+  if (typeof options === 'string') options = url.parse(theUrl);
 
 
   options.headers = options.headers || {};
 
-  for (var h in headers) {
-    options.headers[h] = options.headers[h] || headers[h];
+  for (headerName in headers) {
+    options.headers[headerName] = options.headers[headerName] || headers[headerName];
   }
 
   options.method = 'POST';
@@ -254,25 +252,24 @@ function randomPutHttp(theUrl, size, callback) {
     var d = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     while (d.length < 1024 * 16) d += d;
     return d.substr(0, 1024 * 16);
-  }());
+  })();
 
-  http = options.protocol == 'https:' ? require('https') : require('http');
+  http = options.protocol === 'https:' ? require('https') : require('http');
   proxy(options);
   delete options.protocol;
 
-  var req = http.request(options, function(res) {
-    var data = '';
-    res.on('error', callback);
-    res.on('data', function(newData) {
+  request = http.request(options, function(response) {
+    response.on('error', callback);
+    response.on('data', function(newData) {
       //discard
     });
-    res.on('end', function() {
+    response.on('end', function() {
       // Some cases (like HTTP 413) will interrupt the upload, but still return a response
       callback(null, size - toSend);
     });
   });
 
-  req.on('error', callback);
+  request.on('error', callback);
 
   function write() {
     do {
@@ -286,16 +283,15 @@ function randomPutHttp(theUrl, size, callback) {
       }
       data = data.substr(0, toSend);
       toSend -= data.length;
-    } while (req.write(data));
+    } while (request.write(data));
   }
 
-  req.on('drain', write);
+  request.on('drain', write);
 
   write();
 }
 
 function getXML(xmlurl, callback) {
-
   callback = once(callback);
 
   getHttp(xmlurl, function(err, data) {
@@ -305,13 +301,12 @@ function getXML(xmlurl, callback) {
       callback(null, xml);
     });
   });
-
 }
 
 function pingServer(server, callback) {
   callback = once(callback);
 
-  var tot = 3
+  var total = 3
     , done = 0
     , bestTime = 3600
     ;
@@ -324,7 +319,7 @@ function pingServer(server, callback) {
     setTimeout(function() {
       if (!complete) {
         complete = true;
-        return callback(new Error("Ping timeout"));
+        return callback(new Error('Ping timeout'));
       }
     }, 5000);
 
@@ -337,8 +332,8 @@ function pingServer(server, callback) {
       if (err) diff = 3600; //an hour...
       if (diff < bestTime) bestTime = diff;
       done++;
-      if (done == tot) {
-        if (bestTime >= 3600) return callback(new Error("Ping failed"));
+      if (done === total) {
+        if (bestTime >= 3600) return callback(new Error('Ping failed'));
         return callback(null, bestTime * 1000); //ms
       } else {
         nextPing();
@@ -353,9 +348,10 @@ function pingServers(servers, count, callback) {
   var result = []
     , todo = Math.min(count, servers.length)
     , done = 0
+    , serverIndex
     ;
 
-  for (var n = 0; n < todo; n++) {
+  for (serverIndex = 0; serverIndex < todo; serverIndex++) {
     (function(server) {
       result.push(server);
       server.bestPing = 3600;
@@ -369,22 +365,21 @@ function pingServers(servers, count, callback) {
           server.bestPing = bestTime;
         }
         done++;
-        if (done == todo) {
+        if (done === todo) {
           result.sort(function(a, b) {
             return a.bestPing - b.bestPing;
           });
           callback(null, result);
         }
       });
-    }(servers[n]));
+    })(servers[serverIndex]);
   }
-  if (todo == 0) setImmediate(callback, null, []);
+  if (todo === 0) {
+    setImmediate(callback, null, []);
+  }
 }
 
 function downloadSpeed(urls, maxTime, callback) {
-
-  callback = once(callback);
-
   var concurrent = 2
     , running = 0
     , started = 0
@@ -394,6 +389,8 @@ function downloadSpeed(urls, maxTime, callback) {
     , emit
     , timeStart
     ;
+
+  callback = once(callback);
 
   maxTime = (maxTime || 10000) / 1000;
 
@@ -419,6 +416,7 @@ function downloadSpeed(urls, maxTime, callback) {
     started++;
 
     getHttp(url, true, function(err, count) { //discard all data and return byte count
+      if (err) return callback(err);
       var diff = process.hrtime(timeStart)
         , timePct
         , amtPct
@@ -443,7 +441,7 @@ function downloadSpeed(urls, maxTime, callback) {
       }
       if (done <= todo) {
         emit('downloadprogress', Math.round(Math.min(Math.max(timePct, amtPct), 100.0) * 10) / 10);
-        emit('downloadspeedprogress', fixed)
+        emit('downloadspeedprogress', fixed);
       }
       if (done >= todo) {
         callback(null, speed); //bytes/sec
@@ -457,9 +455,6 @@ function downloadSpeed(urls, maxTime, callback) {
 }
 
 function uploadSpeed(url, sizes, maxTime, callback) {
-
-  callback = once(callback);
-
   var concurrent = 2
     , running = 0
     , started = 0
@@ -470,6 +465,7 @@ function uploadSpeed(url, sizes, maxTime, callback) {
     , timeStart
     ;
 
+  callback = once(callback);
   maxTime = (maxTime || 10000) / 1000;
 
   if (this.emit) {
@@ -522,7 +518,7 @@ function uploadSpeed(url, sizes, maxTime, callback) {
       }
       if (done <= todo) {
         emit('uploadprogress', Math.round(Math.min(Math.max(timePct, amtPct), 100.0) * 10) / 10);
-        emit('uploadspeedprogress', fixed)
+        emit('uploadspeedprogress', fixed);
       }
       if (done >= todo) {
         callback(null, speed); //bytes/sec
@@ -536,30 +532,33 @@ function uploadSpeed(url, sizes, maxTime, callback) {
 }
 
 function speedTest(options) {
-
   options = options || {};
 
-  options.proxy = options.proxy || null;
-  options.maxTime = options.maxTime || 10000;
   options.pingCount = options.pingCount || (options.serverId ? 1 : 5);
-  options.maxServers = options.maxServers || 1;
 
-  proxyOptions = options.proxy;
   var self = new EventEmitter()
     , speedInfo = {}
     , serversUrls = [
-        'http://www.speedtest.net/speedtest-servers-static.php',
-        'http://www.speedtest.net/speedtest-servers-static.php?really=yes',
-        'https://www.speedtest.net/speedtest-servers-static.php',
-        'https://www.speedtest.net/speedtest-servers-static.php?really=totally',
-        'http://www.speedtest.net/speedtest-servers.php',
-        'http://www.speedtest.net/speedtest-servers.php?really=sure',
-        'https://www.speedtest.net/speedtest-servers.php',
-        'https://www.speedtest.net/speedtest-servers.php?really=absolutely'
-      ]
+      'http://www.speedtest.net/speedtest-servers-static.php',
+      'http://www.speedtest.net/speedtest-servers-static.php?really=yes',
+      'https://www.speedtest.net/speedtest-servers-static.php',
+      'https://www.speedtest.net/speedtest-servers-static.php?really=totally',
+      'http://www.speedtest.net/speedtest-servers.php',
+      'http://www.speedtest.net/speedtest-servers.php?really=sure',
+      'https://www.speedtest.net/speedtest-servers.php',
+      'https://www.speedtest.net/speedtest-servers.php?really=absolutely'
+    ]
     , curServer = 0
     , serversUrl
     ;
+
+  options = options || {};
+
+  options.maxTime = options.maxTime || 10000;
+  options.pingCount = options.pingCount || (options.serverId ? 1 : 5);
+  options.maxServers = options.maxServers || 1;
+  options.proxy = options.proxy || null;
+  proxyOptions = options.proxy;
 
   function httpOpts(theUrl) {
     var o = url.parse(theUrl);
@@ -576,7 +575,7 @@ function speedTest(options) {
     config = config && config.settings || {};
 
     function get(name) {
-      return ((config[name] || [])[0] || {}).$ || {}
+      return ((config[name] || [])[0] || {}).$ || {};
     }
 
     var client   = get('client')
@@ -585,7 +584,12 @@ function speedTest(options) {
       , upload   = get('upload')
       ;
 
-    speedInfo.config = {client: client, times: times, download: download, upload: upload};
+    speedInfo.config = {
+      client: client,
+      times: times,
+      download: download,
+      upload: upload
+    };
 
     self.emit('config', speedInfo.config);
     gotData();
@@ -613,33 +617,38 @@ function speedTest(options) {
 
   function gotServers(err, servers) {
     if (err || !servers) return nextServer(err);
-    var s = servers.settings.servers[0].server;
+    var server = servers.settings.servers[0].server
+      , serverIndex
+      ;
 
     servers = [];
-    for (var n = 0; n < s.length; n++) {
-      if (options.serverId && s[n].$.id == options.serverId) {
-        servers = [s[n].$];
+    for (serverIndex = 0; serverIndex < server.length; serverIndex++) {
+      if (options.serverId && server[serverIndex].$.id === options.serverId) {
+        servers = [server[serverIndex].$];
         break;
       }
-      servers.push(s[n].$);
+      servers.push(server[serverIndex].$);
     }
 
     speedInfo.servers = servers;
 
     self.emit('servers', servers);
-    gotData()
+    gotData();
   }
 
   function gotData() {
     if (!speedInfo.config || !speedInfo.servers) return; //not ready yet
 
     //order servers by how close they are:
-    var servers = speedInfo.servers;
+    var servers = speedInfo.servers
+      , serverIndex
+      , server
+      , dist
+      ;
 
-    for (var n = 0; n < servers.length; n++) {
-      var server = servers[n]
-        , dist   = distance(speedInfo.config.client, server)
-        ;
+    for (serverIndex = 0; serverIndex < servers.length; serverIndex++) {
+      server = servers[serverIndex];
+      dist = distance(speedInfo.config.client, server);
 
       server.dist = dist;
       server.distMi = dist * 0.621371;
@@ -650,6 +659,7 @@ function speedTest(options) {
     });
 
     pingServers(servers, options.pingCount, function(err, bestServers) {
+      if (err) return self.emit('error', err);
       if (!bestServers || !bestServers.length) return self.emit('error', new Error('Could not find a server to test on.'));
 
       speedInfo.bestServers = bestServers;
@@ -682,6 +692,7 @@ function speedTest(options) {
     self.emit('testserver', server);
 
     downloadSpeed.call(self, urls, options.maxTime, function(err, speed) {
+      if (err) return self.emit('error', err);
       var fixed = speed * speedTestDownloadCorrectionFactor / 125000;
       self.emit('downloadprogress', 100);
       self.emit('downloadspeed', fixed);
@@ -699,22 +710,20 @@ function speedTest(options) {
 
       startDownload(ix + 1);
     });
-
   }
 
   function startUpload() {
-
     var sizes     = []
       , sizesizes = [
-          Math.round(0.25 * 1000 * 1000),
-          Math.round(0.5 * 1000 * 1000),
-          Math.round(1 * 1000 * 1000),
-          Math.round(2 * 1000 * 1000),
-          Math.round(4 * 1000 * 1000),
-          Math.round(8 * 1000 * 1000),
-          Math.round(16 * 1000 * 1000),
-          Math.round(32 * 1000 * 1000)
-        ]
+        Math.round(0.25 * 1000 * 1000),
+        Math.round(0.5 * 1000 * 1000),
+        Math.round(1 * 1000 * 1000),
+        Math.round(2 * 1000 * 1000),
+        Math.round(4 * 1000 * 1000),
+        Math.round(8 * 1000 * 1000),
+        Math.round(16 * 1000 * 1000),
+        Math.round(32 * 1000 * 1000)
+      ]
       , sizesize
       , n
       , i
@@ -728,13 +737,11 @@ function speedTest(options) {
     }
     self.emit('testserver', speedInfo.bestServer);
     uploadSpeed.call(self, speedInfo.bestServer.url, sizes, options.maxTime, function(err, speed) {
-      var fixed = speed * speedTestUploadCorrectionFactor / 125000;
-      self.emit('uploadprogress', 100);
-      self.emit('uploadspeed', fixed);
-
+      if (err) return self.emit('error', err);
       speedInfo.uploadSpeed = speed;
-      speedInfo.speedTestUploadSpeed = fixed;
-
+      speedInfo.speedTestUploadSpeed = speed * speedTestUploadCorrectionFactor / 125000;
+      self.emit('uploadprogress', 100);
+      self.emit('uploadspeed', speedInfo.speedTestUploadSpeed);
 
       //emit results as nice, clean, object
 
@@ -771,28 +778,28 @@ function speedTest(options) {
 
       var best = speedInfo.bestServer
         , data = {
-            speeds: {
-              //Rounding, because these numbers look way more accurate than they are...
-              download:         Math.round(speedInfo.speedTestDownloadSpeed * 1000) / 1000,
-              upload:           Math.round(speedInfo.speedTestUploadSpeed * 1000) / 1000,
-              originalDownload: Math.round(speedInfo.downloadSpeed),
-              originalUpload:   Math.round(speedInfo.uploadSpeed)
-            },
-            client: speedInfo.config.client,
-            server: {
-              host:       url.parse(best.url).host,
-              lat:        +best.lat,
-              lon:        +best.lon,
-              location:   best.name,
-              country:    best.country,
-              cc:         best.cc,
-              sponsor:    best.sponsor,
-              distance:   Math.round(best.dist * 100) / 100,
-              distanceMi: Math.round(best.distMi * 100) / 100,
-              ping:       Math.round(best.bestPing * 10) / 10,
-              id:         best.id
-            }
+          speeds: {
+            //Rounding, because these numbers look way more accurate than they are...
+            download: Math.round(speedInfo.speedTestDownloadSpeed * 1000) / 1000,
+            upload: Math.round(speedInfo.speedTestUploadSpeed * 1000) / 1000,
+            originalDownload: Math.round(speedInfo.downloadSpeed),
+            originalUpload: Math.round(speedInfo.uploadSpeed)
+          },
+          client: speedInfo.config.client,
+          server: {
+            host: url.parse(best.url).host,
+            lat: Number(best.lat),
+            lon: Number(best.lon),
+            location: best.name,
+            country: best.country,
+            cc: best.cc,
+            sponsor: best.sponsor,
+            distance: Math.round(best.dist * 100) / 100,
+            distanceMi: Math.round(best.distMi * 100) / 100,
+            ping: Math.round(best.bestPing * 10) / 10,
+            id: best.id
           }
+        }
         ;
 
       self.emit('data', data);
@@ -803,22 +810,22 @@ function speedTest(options) {
   function postResults() {
     var best      = speedInfo.bestServer
       , md5       = function(v) {
-          return require('crypto').createHash('md5').update(v).digest('hex')
-        }
+        return require('crypto').createHash('md5').update(v).digest('hex');
+      }
       , dlspeedk  = Math.round(speedInfo.speedTestDownloadSpeed * 1000)
       , ulspeedk  = Math.round(speedInfo.speedTestUploadSpeed * 1000)
       , ping      = Math.round(best.bestPing)
       , res       = [
-          'download', dlspeedk,
-          'ping', ping,
-          'upload', ulspeedk,
-          'promo', '',
-          'startmode', 'pingselect', //or flyok, recommendedselect
-          'recommendedserverid', best.id,
-          'accuracy', 1,
-          'serverid', best.id,
-          'hash', md5(ping + '-' + ulspeedk + '-' + dlspeedk + '-297aae72')
-        ]
+        'download', dlspeedk,
+        'ping', ping,
+        'upload', ulspeedk,
+        'promo', '',
+        'startmode', 'pingselect', //or flyok, recommendedselect
+        'recommendedserverid', best.id,
+        'accuracy', 1,
+        'serverid', best.id,
+        'hash', md5(ping + '-' + ulspeedk + '-' + dlspeedk + '-297aae72')
+      ]
       , reportUrl = 'http://www.speedtest.net/api/api.php'
       , prms      = []
       , opts
@@ -834,8 +841,9 @@ function speedTest(options) {
     opts.headers.referer = 'http://c.speedtest.net/flash/speedtest.swf';
 
     postHttp(opts, prms.join('&'), function(err, data, status) {
-      var match = ('' + data).match(/^resultid=(\d+)(&|$)/), resultUrl;
-      if (status == 200 && match && match[1]) { //I get '0', don't know why. No one knows why.
+      if (err) return self.emit('error', err);
+      var match = String(data).match(/^resultid=(\d+)(&|$)/), resultUrl;
+      if (status === 200 && match && match[1]) { //I get '0', don't know why. No one knows why.
         resultUrl = 'http://www.speedtest.net/result/' + match[1] + '.png';
       }
 
@@ -847,28 +855,30 @@ function speedTest(options) {
   }
 
   return self;
-
 }
 
 module.exports = speedTest;
 
 function visualSpeedTest(options, callback) {
-  // We only need chalk and DraftLog here. Lazy load it.
-  var chalk = require('chalk');
   require('draftlog').into(console);
 
-  callback = once(callback);
-
-  var test = speedTest(options)
+  // We only need chalk and DraftLog here. Lazy load it.
+  var chalk = require('chalk')
+    , test = speedTest(options)
     , log  = function() {}
     , finalData
     , percentage = 0
     , speed = 0
     , bar = console.draft()
+    , size = 50
+    , red = (chalk.supportsColor ? chalk.bgRed(' ') : '─')
+    , green = (chalk.supportsColor ? chalk.bgGreen(' ') : '▇')
     ;
 
+  callback = once(callback);
+
   if (options.log) {
-    if (typeof options.log === "function") {
+    if (typeof options.log === 'function') {
       log = options.log;
     } else {
       log = console.log.bind(console);
@@ -888,17 +898,14 @@ function visualSpeedTest(options, callback) {
     log('Testing from ' + client.ip + ' at ' + client.isp + ', expected dl: ' + (client.ispdlavg / 8000).toFixed(2) + 'MB/s, expected ul: ' + (client.ispulavg / 8000).toFixed(2) + 'MB/s');
   });
 
-  var size = 50;
-  var red = (chalk.supportsColor ? chalk.bgRed(' ') : '─');
-  var green = (chalk.supportsColor ? chalk.bgGreen(' ') : '▇');
-
   function prog(what, pct, spd) {
     percentage = pct || percentage;
-    speed = spd || speed;  
+    speed = spd || speed;
 
-    var complete = Math.round(percentage / 100 * size);
-    var barStr = '';
-    
+    var complete = Math.round(percentage / 100 * size)
+      , barStr = ''
+      ;
+
     // What + padding
     barStr += what;
     barStr += ' '.repeat(12 - what.length);
@@ -940,11 +947,11 @@ function visualSpeedTest(options, callback) {
   });
 
   test.on('downloadspeedprogress', function(speed) {
-    prog('download', null, speed.toFixed(2) + 'Mbps')
+    prog('download', null, speed.toFixed(2) + 'Mbps');
   });
 
   test.on('uploadspeedprogress', function(speed) {
-    prog('upload', null, speed.toFixed(2) + 'Mbps')
+    prog('upload', null, speed.toFixed(2) + 'Mbps');
   });
 
   test.on('data', function(data) {
@@ -955,7 +962,7 @@ function visualSpeedTest(options, callback) {
     log('Results url: ' + url);
   });
 
-  test.on('done', function(data) {
+  test.on('done', function() {
     callback(null, finalData);
   });
 

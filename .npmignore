@@ -11,3 +11,4 @@ test
 CVS
 npm-debug.log
 media
+yarn.lock
