@@ -38,19 +38,17 @@ var parseXML     = require('xml2js').parseString
 // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
 var speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
+  , proxyOptions = null
   ;
-
-// 	Proxy by parameter
-var proxyOptions = null;
 
 // Search a proxy (http|https) in env with case-insensitive
 var proxyHttpEnv = findPropertiesInEnvInsensitive("HTTP_PROXY");
 var proxyHttpsEnv = findPropertiesInEnvInsensitive("HTTPS_PROXY");
 
 function findPropertiesInEnvInsensitive(prop) {
-    prop = (prop + "").toLowerCase();
-    for(var p in process.env){
-        if(process.env.hasOwnProperty(p) && prop == (p+ "").toLowerCase()){
+    prop = (prop).toLowerCase();
+    for (var p in process.env) {
+        if (process.env.hasOwnProperty(p) && prop == (p).toLowerCase()) {
             return process.env[p];
         }
     }
@@ -63,15 +61,15 @@ function findPropertiesInEnvInsensitive(prop) {
 // 2 - proxyHttpEnv (HTTP_PROXY)
 // 3 - proxyHttpsEnv (HTTPS_PROXY)
 function proxy(options) {
-    if (proxyHttpEnv == null && proxyHttpsEnv == null && proxyOptions == null)
-    {
-        return;
-    }
     var proxy = null;
     var isSSL = false;
     var haveHttp = false;
-	// Test the proxy parameter first for priority
-    if (proxyOptions != null)
+	
+    if (!proxyHttpEnv && !proxyHttpsEnv && !proxyOptions) {
+        return;
+    }
+    // Test the proxy parameter first for priority
+    if (proxyOptions)
     {
         if (proxyOptions.startsWith("https:")) {
             isSSL = true
@@ -81,26 +79,25 @@ function proxy(options) {
     else {
 	// Test proxy by env
         proxy = proxyHttpEnv;
-		if (proxyHttpEnv != null) {
-			//for support https in HTTP_PROXY env var
-			if (proxyHttpEnv.startsWith("https:"))
-			{
-				isSSL = true
-			} else {
-				haveHttp = true;
-			}
-
-		} else if (proxyHttpsEnv != null) {
+	if (proxyHttpEnv) {
+		//for support https in HTTP_PROXY env var
+		if (proxyHttpEnv.startsWith("https:")) {
 			isSSL = true
-			proxy = proxyHttpsEnv;
+		} else {
+			haveHttp = true;
 		}
+
+	} else if (proxyHttpsEnv) {
+		isSSL = true
+		proxy = proxyHttpsEnv;
+	}
         // for http priority
-        if (proxyHttpEnv != null && !proxyHttpEnv.startsWith("https:")) {
+        if (proxyHttpEnv && !proxyHttpEnv.startsWith("https:")) {
             haveHttp = true;
         }
     }
 
-    if (isSSL == false || haveHttp == true) {
+    if (!isSSL || haveHttp) {
         var agent = new HttpProxyAgent(proxy);
         options.agent = agent;
     } else {
