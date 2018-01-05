@@ -69,7 +69,7 @@ function proxy(options) {
   // Test the proxy parameter first for priority
   if (proxyOptions)
   {
-    if (proxyOptions.startsWith("https:")) {
+    if (proxyOptions.substr(0, 6) === "https:") {
       isSSL = true;
     }
     proxy = proxyOptions;
@@ -79,7 +79,7 @@ function proxy(options) {
     proxy = proxyHttpEnv;
     if (proxyHttpEnv) {
       //for support https in HTTP_PROXY env var
-      if (proxyHttpEnv.startsWith("https:")) {
+      if (proxyHttpEnv.substr(0, 6) === "https:") {
         isSSL = true;
       } else {
         haveHttp = true;
@@ -89,7 +89,7 @@ function proxy(options) {
       proxy = proxyHttpsEnv;
     }
     // for http priority
-    if (proxyHttpEnv && !proxyHttpEnv.startsWith("https:")) {
+    if (proxyHttpEnv && proxyHttpEnv.substr(0, 6) !== "https:") {
       haveHttp = true;
     }
   }
