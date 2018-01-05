@@ -196,7 +196,7 @@ process.argv.forEach(function (val, index, array) {
 /*
  * interrupt if error (parameters)
  */
-if (errorParameter != null) {
+if (errorParameter) {
     console.log();
     console.error(chalk.red(errorParameter));
     console.log();
