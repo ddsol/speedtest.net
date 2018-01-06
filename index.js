@@ -37,8 +37,8 @@ var parseXML     = require('xml2js').parseString
   , speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
   , proxyOptions = null
-  , proxyHttpEnv = findPropertiesInEnvInsensitive('HTTP_PROXY')
-  , proxyHttpsEnv = findPropertiesInEnvInsensitive('HTTPS_PROXY')
+  , proxyHttpEnv = null
+  , proxyHttpsEnv = null
   ;
 
 function findPropertiesInEnvInsensitive(prop) {
@@ -559,6 +559,8 @@ function speedTest(options) {
   options.maxServers = options.maxServers || 1;
   options.proxy = options.proxy || null;
   proxyOptions = options.proxy;
+  proxyHttpEnv = findPropertiesInEnvInsensitive('HTTP_PROXY');
+  proxyHttpsEnv = findPropertiesInEnvInsensitive('HTTPS_PROXY');
 
   function httpOpts(theUrl) {
     var o = url.parse(theUrl);
