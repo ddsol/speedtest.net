@@ -37,8 +37,8 @@ var parseXML     = require('xml2js').parseString
   , speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
   , proxyOptions = null
-  , proxyHttpEnv = findPropertiesInEnvInsensitive('HTTP_PROXY')
-  , proxyHttpsEnv = findPropertiesInEnvInsensitive('HTTPS_PROXY')
+  , proxyHttpEnv = null
+  , proxyHttpsEnv = null
   ;
 
 function findPropertiesInEnvInsensitive(prop) {
@@ -67,7 +67,7 @@ function proxy(options) {
   }
   // Test the proxy parameter first for priority
   if (proxyOptions) {
-    if (proxyOptions.substr(0, 6) === 'https:') {
+    if (proxyOptions.length >= 6 && proxyOptions.substr(0, 6) === 'https:') {
       isSSL = true;
     }
     proxy = proxyOptions;
@@ -76,7 +76,7 @@ function proxy(options) {
     proxy = proxyHttpEnv;
     if (proxyHttpEnv) {
       //for support https in HTTP_PROXY env var
-      if (proxyHttpEnv.substr(0, 6) === 'https:') {
+      if (proxyHttpEnv.length >= 6 && proxyHttpEnv.substr(0, 6) === 'https:') {
         isSSL = true;
       } else {
         haveHttp = true;
@@ -86,7 +86,7 @@ function proxy(options) {
       proxy = proxyHttpsEnv;
     }
     // for http priority
-    if (proxyHttpEnv && proxyHttpEnv.substr(0, 6) !== 'https:') {
+    if (proxyHttpEnv && proxyHttpEnv.length >= 6 && proxyHttpEnv.substr(0, 6) !== 'https:') {
       haveHttp = true;
     }
   }
@@ -559,7 +559,9 @@ function speedTest(options) {
   options.maxServers = options.maxServers || 1;
   options.proxy = options.proxy || null;
   proxyOptions = options.proxy;
-
+  proxyHttpEnv = findPropertiesInEnvInsensitive("HTTP_PROXY");
+  proxyHttpsEnv = findPropertiesInEnvInsensitive("HTTPS_PROXY");
+  
   function httpOpts(theUrl) {
     var o = url.parse(theUrl);
     o.headers = options.headers || {};
