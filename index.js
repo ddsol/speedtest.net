@@ -616,10 +616,10 @@ function speedTest(options) {
   nextServer();
 
   function gotServers(err, servers) {
-    if (servers.settings == undefined) {
-      err = new Error('No server found, verify your proxy/network');
-    }
     if (err || !servers) return nextServer(err);
+    if (servers.settings == undefined) {
+      return new Error('No server found, verify your proxy/network');
+    }
     var server = servers.settings.servers[0].server
       , serverIndex
       ;
