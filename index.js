@@ -616,8 +616,7 @@ function speedTest(options) {
   nextServer();
 
   function gotServers(err, servers) {
-    if (!servers.hasOwnProperty("settings") || !servers.settings.hasOwnProperty("servers") || servers.settings.servers.length == 0)
-    {
+    if (!servers.hasOwnProperty("settings") || !servers.settings.hasOwnProperty("servers") || servers.settings.servers.length == 0) {
       err = "no server found";
     }
     if (err || !servers) return nextServer(err);
