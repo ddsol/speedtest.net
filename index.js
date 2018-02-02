@@ -616,8 +616,8 @@ function speedTest(options) {
   nextServer();
 
   function gotServers(err, servers) {
-    if (!servers.hasOwnProperty("settings") || !servers.settings.hasOwnProperty("servers") || servers.settings.servers.length == 0) {
-      err = "No server found, verify your proxy/network";
+    if (servers.settings == undefined) {
+      err = new Error('No server found, verify your proxy/network');
     }
     if (err || !servers) return nextServer(err);
     var server = servers.settings.servers[0].server
