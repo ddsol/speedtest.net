@@ -2,7 +2,7 @@
   "name": "speedtest-net",
   "description": "Speedtest.net client",
   "author": "DDSol",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "scripts": {
     "test": "node test/test"
   },
@@ -22,5 +22,5 @@
   "devDependencies": {
     "eslint": "^4.14.0"
   },
-  "license" : "MIT"
+  "license": "MIT"
 }
