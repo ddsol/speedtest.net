@@ -26,5 +26,8 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
+.idea
+.vscode
 
 yarn.lock
+package-lock.json

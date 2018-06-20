@@ -247,7 +247,7 @@ test.on('done', function () {
   process.exit(0);
 });
 
-test.on('error', err => {
+test.on('error', function (err) {
   console.log();
   console.error(chalk.red(err));
   console.log();
