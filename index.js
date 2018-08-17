@@ -33,12 +33,14 @@ var parseXML     = require('xml2js').parseString
   , EventEmitter = require('events').EventEmitter
   , HttpProxyAgent = require('http-proxy-agent')
   , HttpsProxyAgent = require('https-proxy-agent')
+  , os           = require('os')
   // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
   , speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
   , proxyOptions = null
   , proxyHttpEnv = findPropertiesInEnvInsensitive('HTTP_PROXY')
   , proxyHttpsEnv = findPropertiesInEnvInsensitive('HTTPS_PROXY')
+  , localAddress = null
   ;
 
 function findPropertiesInEnvInsensitive(prop) {
@@ -49,6 +51,25 @@ function findPropertiesInEnvInsensitive(prop) {
     }
   }
   return null;
+}
+
+function sourceIP(options) {
+  var found = false;
+
+  if (localAddress) {
+    var ifaces = os.networkInterfaces();
+
+    Object.keys(ifaces).some(function(ifname) {
+      ifaces[ifname].forEach(function(iface) {
+        if (iface.internal === false && localAddress === iface.address) {
+          options.localAddress = localAddress;
+          found = true;
+          return found;
+        }
+      });
+      return found;
+    });
+  }
 }
 
 //set the proxy agent for each http request
@@ -151,6 +172,7 @@ function getHttp(theUrl, discard, callback) {
 
   http = options.protocol === 'https:' ? require('https') : require('http');
   proxy(options);
+  sourceIP(options);
   delete options.protocol;
 
   options.headers = options.headers || {};
@@ -200,6 +222,7 @@ function postHttp(theUrl, data, callback) {
 
   http = require(options.protocol === 'https:' ? 'https' : 'http');
   proxy(options);
+  sourceIP(options);
   delete options.protocol;
 
   req = http.request(options, function(res) {
@@ -256,6 +279,7 @@ function randomPutHttp(theUrl, size, callback) {
 
   http = options.protocol === 'https:' ? require('https') : require('http');
   proxy(options);
+  sourceIP(options);
   delete options.protocol;
 
   request = http.request(options, function(response) {
@@ -559,6 +583,7 @@ function speedTest(options) {
   options.maxServers = options.maxServers || 1;
   options.proxy = options.proxy || null;
   proxyOptions = options.proxy;
+  localAddress = options.sourceIp || null;
 
   function httpOpts(theUrl) {
     var o = url.parse(theUrl);

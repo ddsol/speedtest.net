@@ -36,7 +36,7 @@ test.on('data', data => {
 test.on('error', err => {
   console.error(err);
 });
-  
+
 ```
 
 Visual use example:
@@ -61,6 +61,7 @@ The options include:
 * `log` (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
 * `serverId` ID of the server to restrict the tests against.
 * `serversUrl` URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
+* `sourceIp` The source IP to bind for testing with speedtest.net.
 
 ## Proxy by env
 
@@ -88,7 +89,7 @@ test.on('data', data => {
 test.on('error', err => {
   console.error(err);
 });
-  
+
 ```
 
 ### You can set proxy by options
@@ -111,7 +112,7 @@ test.on('data', data => {
 test.on('error', err => {
   console.error(err);
 });
-  
+
 ```
 ### Proxy priority
  * `proxy by options`
@@ -286,8 +287,8 @@ The returned data is a nested object with the following properties:
  * `upload`: upload bandwidth in megabits per second
  * `originalDownload`: unadjusted download bandwidth in bytes per second
  * `originalUpload`: unadjusted upload bandwidth in bytes per second
-  
-  
+
+
 *  __`client`__:
  * `ip`: ip of client
  * `lat`: latitude of client
@@ -297,8 +298,8 @@ The returned data is a nested object with the following properties:
  * `rating`: another rating, which is always 0 it seems
  * `ispdlavg`: avg download speed by all users of this isp in Mbps
  * `ispulavg`: same for upload
-  
-  
+
+
 * __`server`__:
  * `host`: test server url
  * `lat`: latitude of server
