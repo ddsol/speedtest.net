@@ -62,7 +62,7 @@ function renderStatus(statuses, step, spinner){
    // Build Status
   for (var k in statuses) {
     var status = statuses[k];
-    
+
     // Account for status where it's false/true
     // (indicating not started and not received value yet)
     status = status === false ? '' : status;
@@ -124,7 +124,7 @@ function speedText(speed) {
 
   // Make it fixed
   var str = speed.toFixed(places);
-  
+
   // Concat with unit
   return str + ' Mbps';
 }
@@ -170,11 +170,12 @@ updateLines();
 /*
  * Start speed test
  */
- 
+
 var options = {
   maxTime: 10000,
-  proxy : null,
-}
+  proxy: null,
+  sourceIp: null,
+};
 
 /*
  * get parameters
@@ -182,11 +183,17 @@ var options = {
 var errorParameter = null;
 process.argv.forEach(function (val, index, array) {
   if (index >= 2) {
-    if (val.startsWith("--proxy")) {
-      if (array[index + 1] != undefined) {
+    if (val === '--proxy') {
+      if (array[index + 1] !== undefined) {
         options.proxy = array[index + 1];
       } else {
-        errorParameter = "Error: bad parameters";
+        errorParameter = 'Error: bad parameters';
+      }
+    } else if (val === '--sourceip') {
+      if (array[index + 1] !== undefined) {
+        options.sourceIp = array[index + 1];
+      } else {
+        errorParameter = 'Error: bad parameters';
       }
     }
   }
@@ -225,7 +232,7 @@ test.once('testserver', function (info){
   title = centerText(title, width * 3);
 
   locate('│' + chalk.yellow(title) + '│');
-  
+
   var ping = Math.round(info.bestPing * 10) / 10;
   statuses.Ping = ping + ' ms';
   step = 'Download';

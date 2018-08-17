@@ -36,7 +36,7 @@ test.on('data', data => {
 test.on('error', err => {
   console.error(err);
 });
-  
+
 ```
 
 Visual use example:
@@ -61,6 +61,7 @@ The options include:
   - **`log`**: _`boolean`_ (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
   - **`serverId`**: _`string`_ ID of the server to restrict the tests against.
   - **`serversUrl`**: _`string`_ URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
+* `sourceIp` The source IP to bind for testing with speedtest.net.
 
 ## Proxy by env
 
@@ -88,7 +89,7 @@ test.on('data', data => {
 test.on('error', err => {
   console.error(err);
 });
-  
+
 ```
 
 ### You can set proxy by options
@@ -111,7 +112,7 @@ test.on('data', data => {
 test.on('error', err => {
   console.error(err);
 });
-  
+
 ```
 ### Proxy priority
   - `proxy by options`
@@ -300,7 +301,7 @@ The returned data is a nested object with the following properties:
   - **`server`**:
     - `host`: test server url
     - `lat`: latitude of server
-    - `lon`: longitude of something
+    - `lon`: longitude of server
     - `location`: name of a location, usually a city, but can be anything
     - `country`: name of the country
     - `cc`: country code
