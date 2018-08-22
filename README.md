@@ -298,7 +298,7 @@ The returned data is a nested object with the following properties:
  * `rating`: another rating, which is always 0 it seems
  * `ispdlavg`: avg download speed by all users of this isp in Mbps
  * `ispulavg`: same for upload
- * `interface`: interface used for test, either IP or interface name
+ * `source`: interface used for test, either IP or interface name
   
   
 * __`server`__:

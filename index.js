@@ -796,7 +796,7 @@ async function speedTest(options) {
       speedInfo.config.client.ispdlavg /= 1000;
       speedInfo.config.client.ispulavg /= 1000;
 
-      speedInfo.config.client.interface = options.interface;
+      speedInfo.config.client.source = options.interface;
 
       var best = speedInfo.bestServer
         , data = {
