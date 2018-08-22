@@ -173,7 +173,8 @@ updateLines();
  
 var options = {
   maxTime: 10000,
-  proxy : null,
+  proxy: null,
+  interface: "0.0.0.0"
 }
 
 /*
@@ -185,6 +186,12 @@ process.argv.forEach(function (val, index, array) {
     if (val.startsWith("--proxy")) {
       if (array[index + 1] != undefined) {
         options.proxy = array[index + 1];
+      } else {
+        errorParameter = "Error: bad parameters";
+      }
+    } else if(val.startsWith("--source")){
+      if (array[index + 1] != undefined) {
+        options.interface = array[index + 1];
       } else {
         errorParameter = "Error: bad parameters";
       }
@@ -202,54 +209,61 @@ if (errorParameter) {
   process.exit(1);
 }
 
-var test = SpeedTestNet(options);
-var interval = setInterval(updateLines, 100);
-var completedUpload = false;
-var completedDownload = false;
+SpeedTestNet(options).then(function(test){
+  var interval = setInterval(updateLines, 100);
+  var completedUpload = false;
+  var completedDownload = false;
 
-test.on('downloadspeedprogress', function (speed){
-  if (!completedDownload) {
+  test.on('downloadspeedprogress', function (speed){
+    if (!completedDownload) {
+      statuses.Download = speedText(speed);
+    }
+  });
+
+  test.on('uploadspeedprogress', function (speed){
+    if (!completedUpload) {
+      statuses.Upload = speedText(speed);
+    }
+  });
+
+  test.once('testserver', function (info){
+    // Round to 1 decimal place
+    var title = info.sponsor + ', ' + info.country + ' - ' + info.name;
+    title = centerText(title, width * 3);
+
+    locate('│' + chalk.yellow(title) + '│');
+    
+    var ping = Math.round(info.bestPing * 10) / 10;
+    statuses.Ping = ping + ' ms';
+    step = 'Download';
+  });
+
+  test.once('downloadspeed', function (speed){
+    completedDownload = true;
+    step = 'Upload';
     statuses.Download = speedText(speed);
-  }
-});
+  });
 
-test.on('uploadspeedprogress', function (speed){
-  if (!completedUpload) {
+  test.once('uploadspeed', function (speed){
+    completedUpload = true;
+    step = 'Finished';
     statuses.Upload = speedText(speed);
-  }
+  });
+
+  test.on('done', function () {
+    process.exit(0);
+  });
+
+  test.on('error', function (err) {
+    logError(err);
+  }); 
+
+  return test;
 });
 
-test.once('testserver', function (info){
-  // Round to 1 decimal place
-  var title = info.sponsor + ', ' + info.country + ' - ' + info.name;
-  title = centerText(title, width * 3);
-
-  locate('│' + chalk.yellow(title) + '│');
-  
-  var ping = Math.round(info.bestPing * 10) / 10;
-  statuses.Ping = ping + ' ms';
-  step = 'Download';
-});
-
-test.once('downloadspeed', function (speed){
-  completedDownload = true;
-  step = 'Upload';
-  statuses.Download = speedText(speed);
-});
-
-test.once('uploadspeed', function (speed){
-  completedUpload = true;
-  step = 'Finished';
-  statuses.Upload = speedText(speed);
-});
-
-test.on('done', function () {
-  process.exit(0);
-});
-
-test.on('error', function (err) {
-  console.log();
-  console.error(chalk.red(err));
-  console.log();
-  process.exit(1);
-});
+function logError(err){
+    console.log();
+    console.error(chalk.red(err));
+    console.log();
+    process.exit(1);
+}

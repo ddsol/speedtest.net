@@ -15,9 +15,10 @@
   "dependencies": {
     "chalk": "^2.4.1",
     "draftlog": "^1.0.12",
-    "xml2js": "^0.4.4",
     "http-proxy-agent": "^2.0.0",
-    "https-proxy-agent": "^2.1.1"
+    "https-proxy-agent": "^2.1.1",
+    "network": "0.4.1",
+    "xml2js": "^0.4.4"
   },
   "devDependencies": {
     "eslint": "^4.14.0"

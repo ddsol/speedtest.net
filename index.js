@@ -28,17 +28,18 @@ SOFTWARE.
 
 'use strict';
 
-var parseXML     = require('xml2js').parseString
-  , url          = require('url')
-  , EventEmitter = require('events').EventEmitter
-  , HttpProxyAgent = require('http-proxy-agent')
+var parseXML        = require('xml2js').parseString
+  , url             = require('url')
+  , EventEmitter    = require('events').EventEmitter
+  , HttpProxyAgent  = require('http-proxy-agent')
   , HttpsProxyAgent = require('https-proxy-agent')
   // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
   , speedTestDownloadCorrectionFactor = 1.135
-  , speedTestUploadCorrectionFactor   = 1.139
+  , speedTestUploadCorrectionFactor = 1.139
   , proxyOptions = null
   , proxyHttpEnv = findPropertiesInEnvInsensitive('HTTP_PROXY')
   , proxyHttpsEnv = findPropertiesInEnvInsensitive('HTTPS_PROXY')
+  , localAddress = "0.0.0.0"
   ;
 
 function findPropertiesInEnvInsensitive(prop) {
@@ -100,9 +101,9 @@ function proxy(options) {
 
 function once(callback) {
   if (typeof callback !== 'function') {
-    callback = function() {};
+    callback = function () { };
   }
-  return function() {
+  return function () {
     if (callback) {
       callback.apply(this, arguments);
       callback = null;
@@ -111,13 +112,13 @@ function once(callback) {
 }
 
 function distance(origin, destination) {
-  var lat1   = origin.lat
-    , lon1   = origin.lon
-    , lat2   = destination.lat
-    , lon2   = destination.lon
+  var lat1 = origin.lat
+    , lon1 = origin.lon
+    , lat2 = destination.lat
+    , lon2 = destination.lon
     , radius = 6371 //km
-    , dlat   = deg2rad(lat2 - lat1)
-    , dlon   = deg2rad(lon2 - lon1)
+    , dlat = deg2rad(lat2 - lat1)
+    , dlon = deg2rad(lon2 - lon1)
     , a
     , c
     ;
@@ -156,7 +157,9 @@ function getHttp(theUrl, discard, callback) {
   options.headers = options.headers || {};
   options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.' + Math.trunc(Math.random() * 400 + 2704) + '.' + Math.trunc(Math.random() * 400 + 103) + ' Safari/537.36';
 
-  http.get(options, function(res) {
+  options.localAddress = localAddress;
+
+  http.get(options, function (res) {
     if (res.statusCode === 302) {
       return getHttp(res.headers.location, discard, callback);
     }
@@ -166,11 +169,11 @@ function getHttp(theUrl, discard, callback) {
 
     if (!discard) res.setEncoding('utf8');
     res.on('error', callback);
-    res.on('data', function(newData) {
+    res.on('data', function (newData) {
       count += newData.length;
       if (!discard) data += newData;
     });
-    res.on('end', function() {
+    res.on('end', function () {
       if (discard) data = count;
       callback(null, data, res.statusCode);
     });
@@ -202,14 +205,16 @@ function postHttp(theUrl, data, callback) {
   proxy(options);
   delete options.protocol;
 
-  req = http.request(options, function(res) {
+  options.localAddress = localAddress;
+
+  req = http.request(options, function (res) {
     var data = '';
     res.setEncoding('utf8');
     res.on('error', callback);
-    res.on('data', function(newData) {
+    res.on('data', function (newData) {
       data += newData;
     });
-    res.on('end', function() {
+    res.on('end', function () {
       callback(null, data, res.statusCode);
     });
   });
@@ -229,8 +234,8 @@ function randomPutHttp(theUrl, size, callback) {
       'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0',
       'content-length': size
     }
-    , toSend  = size
-    , sent1   = false
+    , toSend = size
+    , sent1 = false
     , dataBlock
     , http
     , headerName
@@ -248,7 +253,7 @@ function randomPutHttp(theUrl, size, callback) {
 
   options.method = 'POST';
 
-  dataBlock = (function() {
+  dataBlock = (function () {
     var d = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     while (d.length < 1024 * 16) d += d;
     return d.substr(0, 1024 * 16);
@@ -258,12 +263,14 @@ function randomPutHttp(theUrl, size, callback) {
   proxy(options);
   delete options.protocol;
 
-  request = http.request(options, function(response) {
+  options.localAddress = localAddress;
+
+  request = http.request(options, function (response) {
     response.on('error', callback);
-    response.on('data', function(newData) {
+    response.on('data', function (newData) {
       //discard
     });
-    response.on('end', function() {
+    response.on('end', function () {
       // Some cases (like HTTP 413) will interrupt the upload, but still return a response
       callback(null, size - toSend);
     });
@@ -294,9 +301,9 @@ function randomPutHttp(theUrl, size, callback) {
 function getXML(xmlurl, callback) {
   callback = once(callback);
 
-  getHttp(xmlurl, function(err, data) {
+  getHttp(xmlurl, function (err, data) {
     if (err) return callback(err);
-    parseXML(data, function(err, xml) {
+    parseXML(data, function (err, xml) {
       if (err) return callback(err);
       callback(null, xml);
     });
@@ -316,14 +323,14 @@ function pingServer(server, callback) {
       , complete
       ;
 
-    setTimeout(function() {
+    setTimeout(function () {
       if (!complete) {
         complete = true;
         return callback(new Error('Ping timeout'));
       }
     }, 5000);
 
-    getHttp(url.resolve(server.url, 'latency.txt'), function(err, data) {
+    getHttp(url.resolve(server.url, 'latency.txt'), function (err, data) {
       if (complete) return; // already hit timeout
       complete = true;
       var diff = process.hrtime(start);
@@ -352,10 +359,10 @@ function pingServers(servers, count, callback) {
     ;
 
   for (serverIndex = 0; serverIndex < todo; serverIndex++) {
-    (function(server) {
+    (function (server) {
       result.push(server);
       server.bestPing = 3600;
-      pingServer(server, function(err, bestTime) {
+      pingServer(server, function (err, bestTime) {
         if (bestTime < 10 && server.dist < 2) { //too close! Same datacenter? upload speeds of several GB/s ?? Bad measurment...
           bestTime = 100;
         }
@@ -366,7 +373,7 @@ function pingServers(servers, count, callback) {
         }
         done++;
         if (done === todo) {
-          result.sort(function(a, b) {
+          result.sort(function (a, b) {
             return a.bestPing - b.bestPing;
           });
           callback(null, result);
@@ -397,7 +404,7 @@ function downloadSpeed(urls, maxTime, callback) {
   if (this.emit) {
     emit = this.emit.bind(this);
   } else {
-    emit = function() {};
+    emit = function () { };
   }
 
   next();
@@ -410,12 +417,12 @@ function downloadSpeed(urls, maxTime, callback) {
     running++;
 
     var starting = started
-      , url      = urls[starting]
+      , url = urls[starting]
       ;
 
     started++;
 
-    getHttp(url, true, function(err, count) { //discard all data and return byte count
+    getHttp(url, true, function (err, count) { //discard all data and return byte count
       if (err) return callback(err);
       var diff = process.hrtime(timeStart)
         , timePct
@@ -471,7 +478,7 @@ function uploadSpeed(url, sizes, maxTime, callback) {
   if (this.emit) {
     emit = this.emit.bind(this);
   } else {
-    emit = function() {};
+    emit = function () { };
   }
 
   next();
@@ -483,13 +490,13 @@ function uploadSpeed(url, sizes, maxTime, callback) {
     if (running >= concurrent) return;
     running++;
     var starting = started
-      , size     = sizes[starting]
+      , size = sizes[starting]
       ;
 
     started++;
     //started=(started+1) % todo; //Keep staing more until the time is up...
 
-    randomPutHttp(url, size, function(err, count) { //discard all data and return byte count
+    randomPutHttp(url, size, function (err, count) { //discard all data and return byte count
       if (done >= todo) return;
       if (err) {
         count = 0;
@@ -531,7 +538,7 @@ function uploadSpeed(url, sizes, maxTime, callback) {
   }
 }
 
-function speedTest(options) {
+async function speedTest(options) {
   options = options || {};
 
   options.pingCount = options.pingCount || (options.serverId ? 1 : 5);
@@ -552,13 +559,22 @@ function speedTest(options) {
     , serversUrl
     ;
 
-  options = options || {};
-
   options.maxTime = options.maxTime || 10000;
   options.pingCount = options.pingCount || (options.serverId ? 1 : 5);
   options.maxServers = options.maxServers || 1;
   options.proxy = options.proxy || null;
   proxyOptions = options.proxy;
+
+  // Get interface for option
+  options.interface = options.interface || "0.0.0.0";
+  if(isIpAddress(options.interface)){
+    localAddress = options.interface;
+  }else{
+    localAddress = await getInterfaceByName(options.interface);
+    if(!localAddress){
+      return null;
+    }
+  }
 
   function httpOpts(theUrl) {
     var o = url.parse(theUrl);
@@ -578,10 +594,10 @@ function speedTest(options) {
       return ((config[name] || [])[0] || {}).$ || {};
     }
 
-    var client   = get('client')
-      , times    = get('times')
+    var client = get('client')
+      , times = get('times')
       , download = get('download')
-      , upload   = get('upload')
+      , upload = get('upload')
       ;
 
     speedInfo.config = {
@@ -657,11 +673,11 @@ function speedTest(options) {
       server.distMi = dist * 0.621371;
     }
 
-    servers.sort(function(a, b) {
+    servers.sort(function (a, b) {
       return (a.dist - b.dist);
     });
 
-    pingServers(servers, options.pingCount, function(err, bestServers) {
+    pingServers(servers, options.pingCount, function (err, bestServers) {
       if (err) return self.emit('error', err);
       if (!bestServers || !bestServers.length) return self.emit('error', new Error('Could not find a server to test on.'));
 
@@ -678,8 +694,8 @@ function speedTest(options) {
     if (ix >= speedInfo.bestServers.length || ix >= options.maxServers) return startUpload();
     var server = speedInfo.bestServers[ix]
       , svrurl = server.url
-      , sizes  = [350, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
-      , urls   = []
+      , sizes = [350, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
+      , urls = []
       , n
       , i
       , size
@@ -694,7 +710,7 @@ function speedTest(options) {
 
     self.emit('testserver', server);
 
-    downloadSpeed.call(self, urls, options.maxTime, function(err, speed) {
+    downloadSpeed.call(self, urls, options.maxTime, function (err, speed) {
       if (err) return self.emit('error', err);
       var fixed = speed * speedTestDownloadCorrectionFactor / 125000;
       self.emit('downloadprogress', 100);
@@ -716,7 +732,7 @@ function speedTest(options) {
   }
 
   function startUpload() {
-    var sizes     = []
+    var sizes = []
       , sizesizes = [
         Math.round(0.25 * 1000 * 1000),
         Math.round(0.5 * 1000 * 1000),
@@ -739,7 +755,7 @@ function speedTest(options) {
       }
     }
     self.emit('testserver', speedInfo.bestServer);
-    uploadSpeed.call(self, speedInfo.bestServer.url, sizes, options.maxTime, function(err, speed) {
+    uploadSpeed.call(self, speedInfo.bestServer.url, sizes, options.maxTime, function (err, speed) {
       if (err) return self.emit('error', err);
       speedInfo.uploadSpeed = speed;
       speedInfo.speedTestUploadSpeed = speed * speedTestUploadCorrectionFactor / 125000;
@@ -762,6 +778,7 @@ function speedTest(options) {
         bestPing: 37.36689500000001 }
       */
 
+
       function num(name) {
         speedInfo.config.client[name] = parseFloat(speedInfo.config.client[name]);
       }
@@ -778,6 +795,8 @@ function speedTest(options) {
       //Convert to megabits/s
       speedInfo.config.client.ispdlavg /= 1000;
       speedInfo.config.client.ispulavg /= 1000;
+
+      speedInfo.config.client.interface = options.interface;
 
       var best = speedInfo.bestServer
         , data = {
@@ -811,14 +830,14 @@ function speedTest(options) {
   }
 
   function postResults() {
-    var best      = speedInfo.bestServer
-      , md5       = function(v) {
+    var best = speedInfo.bestServer
+      , md5 = function (v) {
         return require('crypto').createHash('md5').update(v).digest('hex');
       }
-      , dlspeedk  = Math.round(speedInfo.speedTestDownloadSpeed * 1000)
-      , ulspeedk  = Math.round(speedInfo.speedTestUploadSpeed * 1000)
-      , ping      = Math.round(best.bestPing)
-      , res       = [
+      , dlspeedk = Math.round(speedInfo.speedTestDownloadSpeed * 1000)
+      , ulspeedk = Math.round(speedInfo.speedTestUploadSpeed * 1000)
+      , ping = Math.round(best.bestPing)
+      , res = [
         'download', dlspeedk,
         'ping', ping,
         'upload', ulspeedk,
@@ -830,7 +849,7 @@ function speedTest(options) {
         'hash', md5(ping + '-' + ulspeedk + '-' + dlspeedk + '-297aae72')
       ]
       , reportUrl = 'http://www.speedtest.net/api/api.php'
-      , prms      = []
+      , prms = []
       , opts
       , n
       ;
@@ -843,7 +862,7 @@ function speedTest(options) {
 
     opts.headers.referer = 'http://c.speedtest.net/flash/speedtest.swf';
 
-    postHttp(opts, prms.join('&'), function(err, data, status) {
+    postHttp(opts, prms.join('&'), function (err, data, status) {
       if (err) return self.emit('error', err);
       var match = String(data).match(/^resultid=(\d+)(&|$)/), resultUrl;
       if (status === 200 && match && match[1]) { //I get '0', don't know why. No one knows why.
@@ -856,19 +875,18 @@ function speedTest(options) {
       self.emit('done', speedInfo);
     });
   }
-
   return self;
 }
 
 module.exports = speedTest;
 
-function visualSpeedTest(options, callback) {
+async function visualSpeedTest(options, callback) {
   require('draftlog').into(console);
 
   // We only need chalk and DraftLog here. Lazy load it.
   var chalk = require('chalk')
     , test = speedTest(options)
-    , log  = function() {}
+    , log = function () { }
     , finalData
     , percentage = 0
     , speed = 0
@@ -888,15 +906,17 @@ function visualSpeedTest(options, callback) {
     }
   }
 
-  test.on('error', function(err) {
+  test = await test;
+
+  test.on('error', function (err) {
     callback(err);
   });
 
-  test.on('testserver', function(server) {
+  test.on('testserver', function (server) {
     log('Using server by ' + server.sponsor + ' in ' + server.name + ', ' + server.country + ' (' + (server.distMi * 0.621371).toFixed(0) + 'mi, ' + (server.bestPing).toFixed(0) + 'ms)');
   });
 
-  test.on('config', function(config) {
+  test.on('config', function (config) {
     var client = config.client;
     log('Testing from ' + client.ip + ' at ' + client.isp + ', expected dl: ' + (client.ispdlavg / 8000).toFixed(2) + 'MB/s, expected ul: ' + (client.ispulavg / 8000).toFixed(2) + 'MB/s');
   });
@@ -927,49 +947,83 @@ function visualSpeedTest(options, callback) {
     bar(barStr);
   }
 
-  test.on('downloadprogress', function(pct) {
+  test.on('downloadprogress', function (pct) {
     prog('download', pct, null);
   });
 
-  test.on('uploadprogress', function(pct) {
+  test.on('uploadprogress', function (pct) {
     prog('upload', pct, null);
   });
 
-  test.on('downloadspeed', function(speed) {
+  test.on('downloadspeed', function (speed) {
     log('Download speed: ', speed.toFixed(2) + 'Mbps');
 
     // Create a new line after each new download
     bar = console.draft();
   });
 
-  test.on('uploadspeed', function(speed) {
+  test.on('uploadspeed', function (speed) {
     log('Upload speed: ', speed.toFixed(2) + 'Mbps');
 
     // Create a new line after each new upload
     bar = console.draft();
   });
 
-  test.on('downloadspeedprogress', function(speed) {
+  test.on('downloadspeedprogress', function (speed) {
     prog('download', null, speed.toFixed(2) + 'Mbps');
   });
 
-  test.on('uploadspeedprogress', function(speed) {
+  test.on('uploadspeedprogress', function (speed) {
     prog('upload', null, speed.toFixed(2) + 'Mbps');
   });
 
-  test.on('data', function(data) {
+  test.on('data', function (data) {
     finalData = data;
   });
 
-  test.on('result', function(url) {
+  test.on('result', function (url) {
     log('Results url: ' + url);
   });
 
-  test.on('done', function() {
+  test.on('done', function () {
     callback(null, finalData);
   });
-
   return test;
 }
 
 speedTest.visual = visualSpeedTest;
+
+// Alias of network.get_interfaces_list for consistency
+const getInterfaces = require('network').get_interfaces_list;
+
+// Helper function to find interface in list of interfaces provided by the `network` module
+function findInterface(interfaces, interfaceId){
+    var found = interfaces.find(function(el){
+      return el.name === interfaceId;
+    });
+    return found;
+}
+
+// Get list of network interfaces asynchronously
+function getInterfaceByName(interfaceId){
+  return new Promise(function(resolve, reject){
+    getInterfaces(function (err, list){
+      if(err){
+        // We couldn't even get a list of interfaces :(
+        reject(err);
+      }
+      // attempt to find the interface by name
+      var found = findInterface(list, interfaceId);
+      if(found){
+        resolve(found.ip_address);
+      }
+      reject("unable to find interface " + interfaceId);
+    });
+  });
+}
+
+//Check if a string is a valid ip Address
+function isIpAddress(ip){
+  // Wow, that's a long regular expression
+  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip);
+}
