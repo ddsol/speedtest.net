@@ -257,9 +257,8 @@ SpeedTestNet(options).then(function(test){
   test.on('error', function (err) {
     logError(err);
   }); 
-
   return test;
-});
+}).catch(logError);
 
 function logError(err){
     console.log();
