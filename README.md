@@ -61,6 +61,7 @@ The options include:
 * `log` (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
 * `serverId` ID of the server to restrict the tests against.
 * `serversUrl` URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
+* `source` IP address or interface name to bind to (default: "0.0.0.0")
 
 ## Proxy by env
 
@@ -297,6 +298,7 @@ The returned data is a nested object with the following properties:
  * `rating`: another rating, which is always 0 it seems
  * `ispdlavg`: avg download speed by all users of this isp in Mbps
  * `ispulavg`: same for upload
+ * `interface`: interface used for test, either IP or interface name
   
   
 * __`server`__:
