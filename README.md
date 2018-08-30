@@ -167,7 +167,7 @@ Fired when the configuration has been fetched from the speedtest server.
 The config is passed.
 
 ```js
-require('speedtest-net')().on('config', => {
+require('speedtest-net')().on('config', config => {
   console.log('Configuration info:');
   console.dir(config);
 });
