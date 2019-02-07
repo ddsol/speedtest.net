@@ -534,10 +534,6 @@ function uploadSpeed(url, sizes, maxTime, callback) {
 }
 
 function speedTest(options) {
-  options = options || {};
-
-  options.pingCount = options.pingCount || (options.serverId ? 1 : 5);
-
   var self = new EventEmitter()
     , speedInfo = {}
     , serversUrls = [
