@@ -53,14 +53,14 @@ speedTest.visual({maxTime: 5000}, (err, data) => {
 You can pass an optional `options` object.
 
 The options include:
-* `proxy` The proxy for upload or download, support http and https (example : "http://proxy:3128")
-* `maxTime` The maximum length of a single test run (upload or download)
-* `pingCount` The number of close servers to ping to find the fastest one
-* `maxServers` The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
-* `headers` Headers to send to speedtest.net
-* `log` (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
-* `serverId` ID of the server to restrict the tests against.
-* `serversUrl` URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
+* **`proxy`**_`: string`_ The proxy for upload or download, support http and https (example : "http://proxy:3128")
+* **`maxTime`**_`: number`_ The maximum length (in ms) of a single test run (upload or download)
+* **`pingCount`**_`: number`_ The number of close servers to ping to find the fastest one
+* **`maxServers`**_`: number`_ The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
+* **`headers`**_`: object`_ Headers to send to speedtest.net
+* **`log`**_`: boolean`_ (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
+* **`serverId`**_`: string`_ ID of the server to restrict the tests against.
+* **`serversUrl`**_`: string`_ URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
 
 ## Proxy by env
 
