@@ -53,14 +53,14 @@ speedTest.visual({maxTime: 5000}, (err, data) => {
 You can pass an optional `options` object.
 
 The options include:
-  - **`proxy`**_`: string`_ The proxy for upload or download, support http and https (example : "http://proxy:3128")
-  - **`maxTime`**_`: number`_ The maximum length (in ms) of a single test run (upload or download)
-  - **`pingCount`**_`: number`_ The number of close servers to ping to find the fastest one
-  - **`maxServers`**_`: number`_ The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
-  - **`headers`**_`: object`_ Headers to send to speedtest.net
-  - **`log`**_`: boolean`_ (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
-  - **`serverId`**_`: string`_ ID of the server to restrict the tests against.
-  - **`serversUrl`**_`: string`_ URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
+  - **`proxy`**: _`string`_ The proxy for upload or download, support http and https (example : "http://proxy:3128")
+  - **`maxTime`**: _`number`_ The maximum length (in ms) of a single test run (upload or download)
+  - **`pingCount`**: _`number`_ The number of close servers to ping to find the fastest one
+  - **`maxServers`**: _`number`_ The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
+  - **`headers`**: _`object`_ Headers to send to speedtest.net
+  - **`log`**: _`boolean`_ (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
+  - **`serverId`**: _`string`_ ID of the server to restrict the tests against.
+  - **`serversUrl`**: _`string`_ URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
 
 ## Proxy by env
 
@@ -281,13 +281,13 @@ require('speedtest-net')().on('data', data => {
 
 The returned data is a nested object with the following properties:
 
-  - __`speeds`__:
+  - **`speeds`**:
     - `download`: download bandwidth in megabits per second
     - `upload`: upload bandwidth in megabits per second
     - `originalDownload`: unadjusted download bandwidth in bytes per second
     - `originalUpload`: unadjusted upload bandwidth in bytes per second
 
-  -  __`client`__:
+  -  **`client`**:
     - `ip`: ip of client
     - `lat`: latitude of client
     - `lon`: longitude of client
@@ -297,7 +297,7 @@ The returned data is a nested object with the following properties:
     - `ispdlavg`: avg download speed by all users of this isp in Mbps
     - `ispulavg`: same for upload
 
-  - __`server`__:
+  - **`server`**:
     - `host`: test server url
     - `lat`: latitude of server
     - `lon`: longitude of something
@@ -330,7 +330,7 @@ The test results are fudged to be in-line with what speedtest.net (owned by Ookl
 [Ookla test flow](http://www.ookla.com/support/a21110547/what+is+the+test+flow+and) description to find out why it is
 necessary to do this. It is certainly possible to copy Ookla's test method in node.js, but it's a significant job.
 
-The test results use correction factors which were derived by dividing bitrates recorded from speedtest.net by raw bitrates recorded using this moudle, using averages over a statistically insufficient number of tests. Even in consideration of this, the current method is likely to produce very similar results as speedtest.net, as long as the internet connection with
+The test results use correction factors which were derived by dividing bitrates recorded from speedtest.net by raw bitrates recorded using this module, using averages over a statistically insufficient number of tests. Even in consideration of this, the current method is likely to produce very similar results as speedtest.net, as long as the internet connection with
 the server has a relatively low [packet jitter](http://en.wikipedia.org/wiki/Jitter#Packet_jitter_in_computer_networks).
 
 ## License
