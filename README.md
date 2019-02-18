@@ -330,7 +330,7 @@ The test results are fudged to be in-line with what speedtest.net (owned by Ookl
 [Ookla test flow](http://www.ookla.com/support/a21110547/what+is+the+test+flow+and) description to find out why it is
 necessary to do this. It is certainly possible to copy Ookla's test method in node.js, but it's a significant job.
 
-The current method is likely to produce very similar results as speedtest.net, as long as the internet connection with
+The test results use correction factors which were derived by dividing bitrates recorded from speedtest.net by raw bitrates recorded using this moudle, using averages over a statistically insufficient number of tests. Even in consideration of this, the current method is likely to produce very similar results as speedtest.net, as long as the internet connection with
 the server has a relatively low [packet jitter](http://en.wikipedia.org/wiki/Jitter#Packet_jitter_in_computer_networks).
 
 ## License
