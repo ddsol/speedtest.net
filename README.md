@@ -53,14 +53,14 @@ speedTest.visual({maxTime: 5000}, (err, data) => {
 You can pass an optional `options` object.
 
 The options include:
-* **`proxy`**_`: string`_ The proxy for upload or download, support http and https (example : "http://proxy:3128")
-* **`maxTime`**_`: number`_ The maximum length (in ms) of a single test run (upload or download)
-* **`pingCount`**_`: number`_ The number of close servers to ping to find the fastest one
-* **`maxServers`**_`: number`_ The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
-* **`headers`**_`: object`_ Headers to send to speedtest.net
-* **`log`**_`: boolean`_ (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
-* **`serverId`**_`: string`_ ID of the server to restrict the tests against.
-* **`serversUrl`**_`: string`_ URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
+  - **`proxy`**_`: string`_ The proxy for upload or download, support http and https (example : "http://proxy:3128")
+  - **`maxTime`**_`: number`_ The maximum length (in ms) of a single test run (upload or download)
+  - **`pingCount`**_`: number`_ The number of close servers to ping to find the fastest one
+  - **`maxServers`**_`: number`_ The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
+  - **`headers`**_`: object`_ Headers to send to speedtest.net
+  - **`log`**_`: boolean`_ (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
+  - **`serverId`**_`: string`_ ID of the server to restrict the tests against.
+  - **`serversUrl`**_`: string`_ URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
 
 ## Proxy by env
 
@@ -114,9 +114,9 @@ test.on('error', err => {
   
 ```
 ### Proxy priority
- * `proxy by options`
- * `proxy by HTTP_PROXY env var`
- * `proxy by HTTPS_PROXY env var`
+  - `proxy by options`
+  - `proxy by HTTP_PROXY env var`
+  - `proxy by HTTPS_PROXY env var`
 
 
 ## Events
@@ -281,36 +281,34 @@ require('speedtest-net')().on('data', data => {
 
 The returned data is a nested object with the following properties:
 
-* __`speeds`__:
- * `download`: download bandwidth in megabits per second
- * `upload`: upload bandwidth in megabits per second
- * `originalDownload`: unadjusted download bandwidth in bytes per second
- * `originalUpload`: unadjusted upload bandwidth in bytes per second
-  
-  
-*  __`client`__:
- * `ip`: ip of client
- * `lat`: latitude of client
- * `lon`: longitude of client
- * `isp`: client's isp
- * `isprating`: some kind of rating
- * `rating`: another rating, which is always 0 it seems
- * `ispdlavg`: avg download speed by all users of this isp in Mbps
- * `ispulavg`: same for upload
-  
-  
-* __`server`__:
- * `host`: test server url
- * `lat`: latitude of server
- * `lon`: longitude of something
- * `location`: name of a location, usually a city, but can be anything
- * `country`: name of the country
- * `cc`: country code
- * `sponsor`: who pays for the test server
- * `distance`: distance from client to server (SI)
- * `distanceMi`: distance from client to server (Imperial)
- * `ping`: how long it took to download a small file from the server, in ms
- * `id`: the id of the server
+  - __`speeds`__:
+    - `download`: download bandwidth in megabits per second
+    - `upload`: upload bandwidth in megabits per second
+    - `originalDownload`: unadjusted download bandwidth in bytes per second
+    - `originalUpload`: unadjusted upload bandwidth in bytes per second
+
+  -  __`client`__:
+    - `ip`: ip of client
+    - `lat`: latitude of client
+    - `lon`: longitude of client
+    - `isp`: client's isp
+    - `isprating`: some kind of rating
+    - `rating`: another rating, which is always 0 it seems
+    - `ispdlavg`: avg download speed by all users of this isp in Mbps
+    - `ispulavg`: same for upload
+
+  - __`server`__:
+    - `host`: test server url
+    - `lat`: latitude of server
+    - `lon`: longitude of something
+    - `location`: name of a location, usually a city, but can be anything
+    - `country`: name of the country
+    - `cc`: country code
+    - `sponsor`: who pays for the test server
+    - `distance`: distance from client to server (SI)
+    - `distanceMi`: distance from client to server (Imperial)
+    - `ping`: how long it took to download a small file from the server, in ms
+    - `id`: the id of the server
 
 ### done
 
