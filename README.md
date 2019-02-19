@@ -287,7 +287,7 @@ The returned data is a nested object with the following properties:
     - `originalDownload`: unadjusted download bandwidth in bytes per second
     - `originalUpload`: unadjusted upload bandwidth in bytes per second
 
-  -  **`client`**:
+  - **`client`**:
     - `ip`: ip of client
     - `lat`: latitude of client
     - `lon`: longitude of client
