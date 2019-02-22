@@ -59,42 +59,32 @@ function findPropertiesInEnvInsensitive(prop) {
 function proxy(options) {
   var proxy = null
     , isSSL = false
-    , haveHttp = false
     ;
 
-  if (!proxyHttpEnv && !proxyHttpsEnv && !proxyOptions) {
-    return;
+  if (options.protocol === 'https:') {
+    isSSL = true;
   }
+
   // Test the proxy parameter first for priority
   if (proxyOptions) {
-    if (proxyOptions.substr(0, 6) === 'https:') {
-      isSSL = true;
-    }
     proxy = proxyOptions;
   } else {
     // Test proxy by env
-    proxy = proxyHttpEnv;
     if (proxyHttpEnv) {
-      //for support https in HTTP_PROXY env var
-      if (proxyHttpEnv.substr(0, 6) === 'https:') {
-        isSSL = true;
-      } else {
-        haveHttp = true;
-      }
+      proxy = proxyHttpEnv;
     } else if (proxyHttpsEnv) {
-      isSSL = true;
       proxy = proxyHttpsEnv;
-    }
-    // for http priority
-    if (proxyHttpEnv && proxyHttpEnv.substr(0, 6) !== 'https:') {
-      haveHttp = true;
     }
   }
 
-  if (!isSSL || haveHttp) {
-    options.agent = new HttpProxyAgent(proxy);
-  } else {
+  if (!proxy) {
+    return;
+  }
+
+  if (isSSL) {
     options.agent = new HttpsProxyAgent(proxy);
+  } else {
+    options.agent = new HttpProxyAgent(proxy);
   }
 }
 
