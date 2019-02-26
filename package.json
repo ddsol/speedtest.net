@@ -22,5 +22,9 @@
   "devDependencies": {
     "eslint": "^4.14.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "files": [
+    "bin/index.js",
+    "index.js"
+  ]
 }
