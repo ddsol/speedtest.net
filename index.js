@@ -39,6 +39,7 @@ var parseXML     = require('xml2js').parseString
   , proxyOptions = null
   , proxyHttpEnv = findPropertiesInEnvInsensitive('HTTP_PROXY')
   , proxyHttpsEnv = findPropertiesInEnvInsensitive('HTTPS_PROXY')
+  , fs = require('fs')
   ;
 
 function findPropertiesInEnvInsensitive(prop) {
@@ -281,6 +282,18 @@ function randomPutHttp(theUrl, size, callback) {
   request.on('drain', write);
 
   write();
+}
+
+function getLocalXML(xmlurl, callback) {
+  callback = once(callback);
+
+  fs.readFile(xmlurl, function(err, data) {
+    if (err) return callback(err);
+    parseXML(data, function(err, xml) {
+      if (err) return callback(err);
+      callback(null, xml);
+    });
+  });
 }
 
 function getXML(xmlurl, callback) {
@@ -598,7 +611,14 @@ function speedTest(options) {
       serversUrl = serversUrls[curServer];
       curServer++;
     }
-    getXML(httpOpts(serversUrl), gotServers);
+
+    if (serversUrl.startsWith('http') || serversUrl.startsWith('https')) {
+      // if given serversUrl is of remote protocol, get xml via http approach
+      getXML(httpOpts(serversUrl), gotServers);
+    } else {
+      //otherwise, try to read it as local file
+      getLocalXML(serversUrl, gotServers);
+    }
   }
 
   nextServer();
