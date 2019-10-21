@@ -2,7 +2,7 @@
   "name": "speedtest-net",
   "description": "Speedtest.net client",
   "author": "DDSol",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "scripts": {
     "test": "node test/test"
   },
