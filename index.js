@@ -551,6 +551,8 @@ function speedTest(options) {
   var self = new EventEmitter()
     , speedInfo = {}
     , serversUrls = [
+      'http://c.speedtest.net/speedtest-servers-static.php',
+      'https://c.speedtest.net/speedtest-servers-static.php',
       'http://www.speedtest.net/speedtest-servers-static.php',
       'http://www.speedtest.net/speedtest-servers-static.php?really=yes',
       'https://www.speedtest.net/speedtest-servers-static.php',
