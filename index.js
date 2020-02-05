@@ -28,12 +28,13 @@ SOFTWARE.
 
 'use strict';
 
-var parseXML     = require('xml2js').parseString
-  , url          = require('url')
-  , EventEmitter = require('events').EventEmitter
-  , HttpProxyAgent = require('http-proxy-agent')
+var parseXML        = require('xml2js').parseString
+  , url             = require('url')
+  , EventEmitter    = require('events').EventEmitter
+  , HttpProxyAgent  = require('http-proxy-agent')
   , HttpsProxyAgent = require('https-proxy-agent')
-  , os           = require('os')
+  , os              = require('os')
+  , zlib            = require('zlib')
   // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
   , speedTestDownloadCorrectionFactor = 1.135
   , speedTestUploadCorrectionFactor   = 1.139
@@ -167,7 +168,9 @@ function getHttp(theUrl, discard, callback) {
 
   options.headers = options.headers || {};
   options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.' + Math.trunc(Math.random() * 400 + 2704) + '.' + Math.trunc(Math.random() * 400 + 103) + ' Safari/537.36';
-
+  if (!discard) {
+    options.headers['accept-encoding'] = 'gzip,deflate';
+  }
   options.timeout = 500;
 
   http.get(options, function(res) {
@@ -176,15 +179,25 @@ function getHttp(theUrl, discard, callback) {
     }
     var data = ''
       , count = 0
+      , stream = res
       ;
 
-    if (!discard) res.setEncoding('utf8');
-    res.on('error', callback);
-    res.on('data', function(newData) {
+    switch (res.headers['content-encoding']) {
+      case 'gzip':
+        stream = res.pipe(zlib.createGunzip());
+        break;
+      case 'deflate':
+        stream = res.pipe(zlib.createInflate());
+        break;
+    }
+
+    if (!discard) stream.setEncoding('utf8');
+    stream.on('error', callback);
+    stream.on('data', function(newData) {
       count += newData.length;
       if (!discard) data += newData;
     });
-    res.on('end', function() {
+    stream.on('end', function() {
       if (discard) data = count;
       callback(null, data, res.statusCode);
     });
