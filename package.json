@@ -1,11 +1,8 @@
 {
   "name": "speedtest-net",
   "description": "Speedtest.net client",
-  "author": "DDSol",
+  "author": "Han de Boer",
   "version": "1.6.2",
-  "scripts": {
-    "test": "node test/test"
-  },
   "bin": "bin/index.js",
   "main": "index.js",
   "repository": {
@@ -14,13 +11,19 @@
   },
   "dependencies": {
     "chalk": "^2.4.1",
+    "decompress": "^4.2.0",
+    "decompress-tar": "^4.1.1",
+    "decompress-tarbz2": "^4.1.1",
+    "decompress-targz": "^4.1.1",
+    "decompress-tarxz": "^3.0.0",
+    "decompress-unzip": "^4.0.1",
+    "download": "^7.1.0",
     "draftlog": "^1.0.12",
-    "xml2js": "^0.4.4",
-    "http-proxy-agent": "^2.0.0",
-    "https-proxy-agent": "^3.0.0"
+    "mkdirp": "^1.0.3",
+    "sha256-file": "^1.0.0"
   },
   "devDependencies": {
-    "eslint": "^4.14.0"
+    "eslint": "^6.8.0"
   },
   "license": "MIT",
   "files": [

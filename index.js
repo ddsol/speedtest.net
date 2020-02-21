@@ -28,976 +28,310 @@ SOFTWARE.
 
 'use strict';
 
-var parseXML        = require('xml2js').parseString
-  , url             = require('url')
-  , EventEmitter    = require('events').EventEmitter
-  , HttpProxyAgent  = require('http-proxy-agent')
-  , HttpsProxyAgent = require('https-proxy-agent')
-  , os              = require('os')
-  , zlib            = require('zlib')
-  // These numbers were obtained by measuring and averaging both using this module and the official speedtest.net
-  , speedTestDownloadCorrectionFactor = 1.135
-  , speedTestUploadCorrectionFactor   = 1.139
-  , proxyOptions = null
-  , proxyHttpEnv = findPropertiesInEnvInsensitive('HTTP_PROXY')
-  , proxyHttpsEnv = findPropertiesInEnvInsensitive('HTTPS_PROXY')
-  , localAddress = null
-  ;
+const util = require('util');
+const path = require('path');
+const mkdirp = require('mkdirp');
+const sha256File = util.promisify(require('sha256-file'));
+const fs = require('fs');
+const childProcess = require('child_process');
+const download = require('download');
+const decompress = require('decompress');
+const decompressTar = require('decompress-tar');
+const decompressTarbz2 = require('decompress-tarbz2');
+const decompressTargz = require('decompress-targz');
+const decompressUnzip = require('decompress-unzip');
+const decompressTarXz = require('decompress-tarxz');
 
-function findPropertiesInEnvInsensitive(prop) {
-  prop = prop.toLowerCase();
-  for (var p in process.env) {
-    if (process.env.hasOwnProperty(p) && prop === p.toLowerCase()) {
-      return process.env[p];
-    }
-  }
-  return null;
+function fileExists(file) {
+  return new Promise(resolve => fs.access(file, fs.F_OK, err => resolve(!err)));
 }
 
-function sourceIP(options) {
-  var found = false;
+function chMod(file, mode) {
+  return new Promise((resolve, reject) => fs.chmod(file, mode, err => {
+    if (err) reject(err);
+    resolve();
+  }));
+}
 
-  if (localAddress) {
-    var ifaces = os.networkInterfaces();
+const defaultBinaryVersion = '1.0.0';
 
-    Object.keys(ifaces).some(function(ifname) {
-      ifaces[ifname].forEach(function(iface) {
-        if (iface.internal === false && localAddress === iface.address) {
-          options.localAddress = localAddress;
-          found = true;
-          return found;
-        }
-      });
-      return found;
+const platforms = [
+  {
+    platform: 'darwin',
+    arch: 'x64',
+    pkg: 'macosx.tgz',
+    bin: 'macosx',
+    sha: '8d0af8a81e668fbf04b7676f173016976131877e9fbdcd0a396d4e6b70a5e8f4'
+  },
+  {
+    platform: 'win32',
+    arch: 'x64',
+    pkg: 'win64.zip',
+    bin: 'win-x64.exe',
+    sha: '64054a021dd7d49e618799a35ddbc618dcfc7b3990e28e513a420741717ac1ad'
+  },
+  {
+    platform: 'linux',
+    arch: 'ia32',
+    pkg: 'i386-linux.tgz',
+    bin: 'linux-ia32',
+    sha: '828362e559e53d80b3579df032fe756a0993cf33934416fa72e9d69c8025321b'
+  },
+  {
+    platform: 'linux',
+    arch: 'x64',
+    pkg: 'x86_64-linux.tgz',
+    bin: 'linux-x64',
+    sha: '5fe2028f0d4427e4f4231d9f9cf70e6691bb890a70636d75232fe4d970633168'
+  },
+  {
+    platform: 'linux',
+    arch: 'arm',
+    pkg: 'arm-linux.tgz',
+    bin: 'linux-arm',
+    sha: '0fa7b3237d0fe4fa15bc1e7cb27ccac63b02a2679b71c2879d59dd75d3c9235d'
+  },
+  {
+    platform: 'linux',
+    arch: 'armhf', // Not sure how to detect this.
+    pkg: 'armhf-linux.tgz',
+    bin: 'linux-armhf',
+    sha: '04b54991cfb9492ea8b2a3500340e7eeb78065a00ad25a032be7763f1415decb'
+  },
+  {
+    platform: 'linux',
+    arch: 'arm64',
+    pkg: 'aarch64-linux.tgz',
+    bin: 'linux-arm64',
+    sha: '073684dc3490508ca01b04c5855e04cfd797fed33f6ea6a6edc26dfbc6f6aa9e'
+  },
+  {
+    platform: 'freebsd',
+    arch: 'x64',
+    pkg: 'freebsd.pkg',
+    bin: 'freebsd-x64',
+    sha: 'f95647ed1ff251b5a39eda80ea447c9b2367f7cfb4155454c23a2f02b94dd844'
+  }
+];
+
+const progressPhases = {
+  ping: 2,
+  download: 15,
+  upload: 6
+};
+const totalTime = Object.keys(progressPhases).reduce((total, key) => total + progressPhases[key], 0);
+Object.keys(progressPhases).forEach(key => progressPhases[key] /= totalTime);
+
+function appendFileName(fileName, trailer) {
+  const ext = path.extname(fileName);
+  const name = fileName.slice(0, -ext.length);
+  return `${name}${trailer}${ext}`;
+}
+
+async function ensureBinary({ platform = process.platform, arch = process.arch, binaryVersion = defaultBinaryVersion } = {}) {
+  const binaryLocation = 'https://bintray.com/ookla/download/download_file?file_path=ookla-speedtest-$v-$p';
+  const found = platforms.find(p => p.platform === platform && p.arch === arch);
+  if (!found) throw new Error(`${platform} on ${arch} not supported`);
+  const binDir = path.join(__dirname, 'binaries');
+  await mkdirp(binDir);
+  const binFileName = appendFileName(found.bin, `-${binaryVersion}`);
+  const binPath = path.join(binDir, binFileName);
+  if (!(await fileExists(binPath))) {
+    const pkgDir = path.join(__dirname, 'pkg');
+    await mkdirp(pkgDir);
+    const pkgFileName = appendFileName(found.pkg, `-${binaryVersion}`);
+    const pkgPath = path.join(pkgDir, pkgFileName);
+    if (!(await fileExists(pkgPath))) {
+      const url = binaryLocation.replace('$v', binaryVersion).replace('$p', found.pkg);
+      try {
+        await download(url, pkgDir, { filename: pkgFileName });
+      } catch (err) {
+        throw new Error(`Error downloading speedtest CLI executable from ${url}: ${err.message}`);
+      }
+    }
+    const fileSha = await sha256File(pkgPath);
+    if (binaryVersion === defaultBinaryVersion && fileSha !== found.sha) {
+      throw new Error(`SHA mismatch ${pkgFileName}, found "${fileSha}", expected "${found.sha}"`);
+    }
+    // noinspection JSUnusedGlobalSymbols
+    await decompress(pkgPath, binDir, {
+      plugins: [
+        decompressTar(),
+        decompressTarbz2(),
+        decompressTargz(),
+        decompressUnzip(),
+        decompressTarXz()
+      ],
+      filter: file => {
+        return /(^|\/)speedtest(.exe)?$/.test(file.path);
+      },
+      map: file => {
+        file.path = binFileName;
+        return file;
+      }
     });
+    if (!(await fileExists(binPath))) {
+      throw new Error(`Error decompressing package "${pkgPath}"`);
+    }
+    await chMod(binPath, 0o755);
   }
+  return binPath;
 }
 
-//set the proxy agent for each http request
-// priority :
-// 1 - proxyOptions
-// 2 - proxyHttpEnv (HTTP_PROXY)
-// 3 - proxyHttpsEnv (HTTPS_PROXY)
-function proxy(options) {
-  var proxy = null
-    , isSSL = false
-    ;
-
-  if (options.protocol === 'https:') {
-    isSSL = true;
-  }
-
-  // Test the proxy parameter first for priority
-  if (proxyOptions) {
-    proxy = proxyOptions;
-  } else {
-    // Test proxy by env
-    if (proxyHttpEnv) {
-      proxy = proxyHttpEnv;
-    } else if (proxyHttpsEnv) {
-      proxy = proxyHttpsEnv;
+function lineify(stream, onLine) {
+  let rest = '';
+  stream.setEncoding('utf8');
+  stream.on('data', data => {
+    rest += data;
+    let match;
+    // eslint-disable-next-line no-cond-assign
+    while (match = /(^.*?)(\r)?\n/.exec(rest)) {
+      onLine(match[1]);
+      rest = rest.slice(match[0].length);
     }
-  }
-
-  if (!proxy) {
-    return;
-  }
-
-  if (isSSL) {
-    options.agent = new HttpsProxyAgent(proxy);
-  } else {
-    options.agent = new HttpProxyAgent(proxy);
-  }
+  });
+  stream.on('end', () => {
+    if (rest) onLine(rest);
+  });
 }
 
-function once(callback) {
-  if (typeof callback !== 'function') {
-    callback = function() {};
+function pendingPromise() {
+  let resolve = undefined;
+  let reject = undefined;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+async function exec(options = {}) {
+  const {
+    acceptLicense = false,
+    progress = () => {},
+    serverId,
+    sourceIp,
+    host,
+    binaryVersion,
+    verbosity = 0
+  } = options;
+  const binary = options.binary || await ensureBinary({ binaryVersion });
+  const args = ['-f', 'json', '-P', '8'];
+  for (let i = 0; i < verbosity; i++) {
+    args.push('-v');
   }
-  return function() {
-    if (callback) {
-      callback.apply(this, arguments);
-      callback = null;
-    }
+  if (options.progress) args.push('-p');
+  if (acceptLicense) {
+    args.push('--accept-license');
+  }
+  if (serverId) {
+    args.push('-s', serverId);
+  }
+  if (sourceIp) {
+    args.push('-i', sourceIp);
+  }
+  if (host) {
+    args.push('-o', host);
+  }
+  const process = childProcess.spawn(binary, args, {
+    windowsHide: true
+  });
+  const { promise, resolve, reject: rejectPromise } = pendingPromise();
+  let aborted = false;
+  const reject = err => {
+    aborted = true;
+    rejectPromise(err);
   };
-}
-
-function distance(origin, destination) {
-  var lat1   = origin.lat
-    , lon1   = origin.lon
-    , lat2   = destination.lat
-    , lon2   = destination.lon
-    , radius = 6371 //km
-    , dlat   = deg2rad(lat2 - lat1)
-    , dlon   = deg2rad(lon2 - lon1)
-    , a
-    , c
-    ;
-
-  a = (Math.sin(dlat / 2) * Math.sin(dlat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dlon / 2) * Math.sin(dlon / 2));
-  c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return radius * c;
-
-  function deg2rad(d) {
-    return d / 180 * Math.PI;
-  }
-}
-
-
-function getHttp(theUrl, discard, callback) {
-  var http
-    , options
-    ;
-
-  if (!callback) {
-    callback = discard;
-    discard = false;
-  }
-
-  callback = once(callback);
-
-  options = theUrl;
-
-  if (typeof options === 'string') options = url.parse(options);
-
-  http = options.protocol === 'https:' ? require('https') : require('http');
-  proxy(options);
-  sourceIP(options);
-  delete options.protocol;
-
-  options.headers = options.headers || {};
-  options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 6.3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.' + Math.trunc(Math.random() * 400 + 2704) + '.' + Math.trunc(Math.random() * 400 + 103) + ' Safari/537.36';
-  if (!discard) {
-    options.headers['accept-encoding'] = 'gzip,deflate';
-  }
-  options.timeout = 500;
-
-  http.get(options, function(res) {
-    if (res.statusCode === 302) {
-      return getHttp(res.headers.location, discard, callback);
-    }
-    var data = ''
-      , count = 0
-      , stream = res
-      ;
-
-    switch (res.headers['content-encoding']) {
-      case 'gzip':
-        stream = res.pipe(zlib.createGunzip());
-        break;
-      case 'deflate':
-        stream = res.pipe(zlib.createInflate());
-        break;
-    }
-
-    if (!discard) stream.setEncoding('utf8');
-    stream.on('error', callback);
-    stream.on('data', function(newData) {
-      count += newData.length;
-      if (!discard) data += newData;
-    });
-    stream.on('end', function() {
-      if (discard) data = count;
-      callback(null, data, res.statusCode);
-    });
-  }).on('error', callback);
-}
-
-function postHttp(theUrl, data, callback) {
-  if (!callback) {
-    callback = data;
-    data = '';
-  }
-
-  callback = once(callback);
-
-  var options = theUrl
-    , http
-    , req
-    ;
-
-  if (typeof options === 'string') options = url.parse(options);
-
-  options.headers = options.headers || {};
-  options.headers['user-agent'] = options.headers['user-agent'] || 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0';
-  options.headers['content-type'] = 'application/x-www-form-urlencoded';
-  options.headers['content-length'] = data.length;
-  options.method = 'POST';
-
-  http = require(options.protocol === 'https:' ? 'https' : 'http');
-  proxy(options);
-  sourceIP(options);
-  delete options.protocol;
-
-  req = http.request(options, function(res) {
-    var data = '';
-    res.setEncoding('utf8');
-    res.on('error', callback);
-    res.on('data', function(newData) {
-      data += newData;
-    });
-    res.on('end', function() {
-      callback(null, data, res.statusCode);
-    });
+  const errorLines = [];
+  let priorProgress = 0;
+  let lastProgress = 0;
+  let currentPhase;
+  let result = undefined;
+  lineify(process.stderr, handleLine.bind(null, true));
+  lineify(process.stdout, handleLine.bind(null, false));
+  process.on('exit', resolve);
+  process.on('error', origError => {
+    reject(new Error(errorLines.concat(origError.message).join('\n')));
   });
-
-  req.on('error', callback);
-
-  req.end(data);
-}
-
-function randomPutHttp(theUrl, size, callback) {
-  callback = once(callback);
-
-  size = (size || 131072) | 0; //eslint-disable-line no-bitwise
-
-  var options = theUrl
-    , headers = {
-      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:24.0) Gecko/20100101 Firefox/24.0',
-      'content-length': size
-    }
-    , toSend  = size
-    , sent1   = false
-    , dataBlock
-    , http
-    , headerName
-    , request
-    ;
-
-  if (typeof options === 'string') options = url.parse(theUrl);
-
-
-  options.headers = options.headers || {};
-
-  for (headerName in headers) {
-    options.headers[headerName] = options.headers[headerName] || headers[headerName];
+  try {
+    await promise;
+  } finally {
+    process.kill();
   }
-
-  options.method = 'POST';
-
-  dataBlock = (function() {
-    var d = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    while (d.length < 1024 * 16) d += d;
-    return d.substr(0, 1024 * 16);
-  })();
-
-  http = options.protocol === 'https:' ? require('https') : require('http');
-  proxy(options);
-  sourceIP(options);
-  delete options.protocol;
-
-  request = http.request(options, function(response) {
-    response.on('error', callback);
-    response.on('data', function(newData) {
-      //discard
-    });
-    response.on('end', function() {
-      // Some cases (like HTTP 413) will interrupt the upload, but still return a response
-      callback(null, size - toSend);
-    });
-  });
-
-  request.on('error', callback);
-
-  function write() {
-    do {
-      if (!toSend) {
-        return; //we're done sending...
-      }
-      var data = dataBlock;
-      if (!sent1) {
-        sent1 = true;
-        data = 'content1=' + data;
-      }
-      data = data.substr(0, toSend);
-      toSend -= data.length;
-    } while (request.write(data));
-  }
-
-  request.on('drain', write);
-
-  write();
-}
-
-function getXML(xmlurl, callback) {
-  callback = once(callback);
-
-  getHttp(xmlurl, function(err, data) {
-    if (err) return callback(err);
-    parseXML(data, function(err, xml) {
-      if (err) return callback(err);
-      callback(null, xml);
-    });
-  });
-}
-
-function pingServer(server, callback) {
-  callback = once(callback);
-
-  var total = 3
-    , done = 0
-    , bestTime = 3600
-    ;
-
-  function nextPing() {
-    var start = process.hrtime()
-      , complete
-      ;
-
-    setTimeout(function() {
-      if (!complete) {
-        complete = true;
-        return callback(new Error('Ping timeout'));
-      }
-    }, 5000);
-
-    getHttp(url.resolve(server.url, 'latency.txt'), function(err, data) {
-      if (complete) return; // already hit timeout
-      complete = true;
-      var diff = process.hrtime(start);
-      diff = diff[0] + diff[1] * 1e-9; //seconds
-      if (!err && data.substr(0, 9) !== 'test=test') err = new Error('Unknown latency file');
-      if (err) diff = 3600; //an hour...
-      if (diff < bestTime) bestTime = diff;
-      done++;
-      if (done === total) {
-        if (bestTime >= 3600) return callback(new Error('Ping failed'));
-        return callback(null, bestTime * 1000); //ms
-      } else {
-        nextPing();
-      }
-    });
-  }
-
-  nextPing();
-}
-
-function pingServers(servers, count, callback) {
-  var result = []
-    , todo = Math.min(count, servers.length)
-    , done = 0
-    , serverIndex
-    ;
-
-  for (serverIndex = 0; serverIndex < todo; serverIndex++) {
-    (function(server) {
-      result.push(server);
-      server.bestPing = 3600;
-      pingServer(server, function(err, bestTime) {
-        if (bestTime < 10 && server.dist < 2) { //too close! Same datacenter? upload speeds of several GB/s ?? Bad measurment...
-          bestTime = 100;
-        }
-        if (err) {
-          server.bestPing = 3600;
-        } else {
-          server.bestPing = bestTime;
-        }
-        done++;
-        if (done === todo) {
-          result.sort(function(a, b) {
-            return a.bestPing - b.bestPing;
-          });
-          callback(null, result);
-        }
-      });
-    })(servers[serverIndex]);
-  }
-  if (todo === 0) {
-    setImmediate(callback, null, []);
-  }
-}
-
-function downloadSpeed(urls, maxTime, callback) {
-  var concurrent = 2
-    , running = 0
-    , started = 0
-    , done = 0
-    , todo = urls.length
-    , totalBytes = 0
-    , emit
-    , timeStart
-    ;
-
-  callback = once(callback);
-
-  maxTime = (maxTime || 10000) / 1000;
-
-  if (this.emit) {
-    emit = this.emit.bind(this);
-  } else {
-    emit = function() {};
-  }
-
-  next();
-
-  timeStart = process.hrtime();
-
-  function next() {
-    if (started >= todo) return; //all are started
-    if (running >= concurrent) return;
-    running++;
-
-    var starting = started
-      , url      = urls[starting]
-      ;
-
-    started++;
-
-    getHttp(url, true, function(err, count) { //discard all data and return byte count
-      if (err) return callback(err);
-      var diff = process.hrtime(timeStart)
-        , timePct
-        , amtPct
-        , speed
-        , fixed
-        ;
-
-      diff = diff[0] + diff[1] * 1e-9; //seconds
-
-      running--;
-      totalBytes += count;
-      done++;
-      speed = totalBytes / diff;
-      fixed = speed * speedTestDownloadCorrectionFactor / 125000;
-
-      timePct = diff / maxTime * 100;
-      // amtPct=done/todo*100;
-      amtPct = 0; //time-only
-
-      if (diff > maxTime) {
-        done = todo;
-      }
-      if (done <= todo) {
-        emit('downloadprogress', Math.round(Math.min(Math.max(timePct, amtPct), 100.0) * 10) / 10);
-        emit('downloadspeedprogress', fixed);
-      }
-      if (done >= todo) {
-        callback(null, speed); //bytes/sec
-      } else {
-        next();
-      }
-    });
-
-    next(); //Try another
-  }
-}
-
-function uploadSpeed(url, sizes, maxTime, callback) {
-  var concurrent = 2
-    , running = 0
-    , started = 0
-    , done = 0
-    , todo = sizes.length
-    , totalBytes = 0
-    , emit
-    , timeStart
-    ;
-
-  callback = once(callback);
-  maxTime = (maxTime || 10000) / 1000;
-
-  if (this.emit) {
-    emit = this.emit.bind(this);
-  } else {
-    emit = function() {};
-  }
-
-  next();
-
-  timeStart = process.hrtime();
-
-  function next() {
-    if (started >= todo) return; //all are started
-    if (running >= concurrent) return;
-    running++;
-    var starting = started
-      , size     = sizes[starting]
-      ;
-
-    started++;
-    //started=(started+1) % todo; //Keep staing more until the time is up...
-
-    randomPutHttp(url, size, function(err, count) { //discard all data and return byte count
-      if (done >= todo) return;
-      if (err) {
-        count = 0;
-      }
-      var diff = process.hrtime(timeStart)
-        , timePct
-        , amtPct
-        , speed
-        , fixed
-        ;
-
-      diff = diff[0] + diff[1] * 1e-9; //seconds
-
-      running--;
-      totalBytes += count;
-      done++;
-      speed = totalBytes / diff;
-      fixed = speed * speedTestUploadCorrectionFactor / 125000;
-
-      timePct = diff / maxTime * 100;
-      amtPct = done / todo * 100;
-      //amtPct=0; //time-only
-
-      if (diff > maxTime) {
-        done = todo;
-      }
-      if (done <= todo) {
-        emit('uploadprogress', Math.round(Math.min(Math.max(timePct, amtPct), 100.0) * 10) / 10);
-        emit('uploadspeedprogress', fixed);
-      }
-      if (done >= todo) {
-        callback(null, speed); //bytes/sec
-      } else {
-        next();
-      }
-    });
-
-    next(); //Try another
-  }
-}
-
-function speedTest(options) {
-  var self = new EventEmitter()
-    , speedInfo = {}
-    , serversUrls = [
-      'http://c.speedtest.net/speedtest-servers-static.php',
-      'https://c.speedtest.net/speedtest-servers-static.php',
-      'http://www.speedtest.net/speedtest-servers-static.php',
-      'http://www.speedtest.net/speedtest-servers-static.php?really=yes',
-      'https://www.speedtest.net/speedtest-servers-static.php',
-      'https://www.speedtest.net/speedtest-servers-static.php?really=totally',
-      'http://www.speedtest.net/speedtest-servers.php',
-      'http://www.speedtest.net/speedtest-servers.php?really=sure',
-      'https://www.speedtest.net/speedtest-servers.php',
-      'https://www.speedtest.net/speedtest-servers.php?really=absolutely'
-    ]
-    , curServer = 0
-    , serversUrl
-    ;
-
-  options = options || {};
-
-  options.maxTime = options.maxTime || 10000;
-  options.pingCount = options.pingCount || (options.serverId ? 1 : 5);
-  options.maxServers = options.maxServers || 1;
-  options.proxy = options.proxy || null;
-  proxyOptions = options.proxy;
-  localAddress = options.sourceIp || null;
-
-  function httpOpts(theUrl) {
-    var o = url.parse(theUrl);
-    o.headers = options.headers || {};
-    return o;
-  }
-
-  //Fetch config
-
-  getXML(httpOpts('https://www.speedtest.net/speedtest-config.php'), gotConfig);
-
-  function gotConfig(err, config) {
-    if (err) return self.emit('error', err);
-    config = config && config.settings || {};
-
-    function get(name) {
-      return ((config[name] || [])[0] || {}).$ || {};
-    }
-
-    var client   = get('client')
-      , times    = get('times')
-      , download = get('download')
-      , upload   = get('upload')
-      ;
-
-    speedInfo.config = {
-      client: client,
-      times: times,
-      download: download,
-      upload: upload
-    };
-
-    self.emit('config', speedInfo.config);
-    gotData();
-  }
-
-  if (options.serversUrl) {
-    serversUrl = options.serversUrl;
-    curServer = -1;
-  }
-
-  function nextServer(err) {
-    if (curServer >= serversUrls.length) {
-      return self.emit('error', err || new Error('There was a problem getting the list of servers from SpeedTest.net. Consider using a custom serversUrl'));
-    }
-    if (curServer < 0) {
-      curServer = serversUrls.length;
+  if (errorLines.length) {
+    let error = errorLines.join('\n');
+    error = error.replace(/===*.*====*\nLicense acceptance recorded. Continuing.\n?/, '');
+    const acceptanceMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-license/;
+    if (acceptanceMessage.test(error)) {
+      error = error.replace(acceptanceMessage, 'To accept the message, pass the acceptLicense: true option');
     } else {
-      serversUrl = serversUrls[curServer];
-      curServer++;
+      error = error.replace(/===*[\s\S]*about\/privacy\n?/, '');
     }
-    getXML(httpOpts(serversUrl), gotServers);
+    error = error.trim();
+    if (error) throw new Error(error);
   }
+  aborted = true;
+  return result;
 
-  nextServer();
-
-  function gotServers(err, servers) {
-    if (err) return nextServer(err);
-    if (!servers || !servers.settings) {
-      return nextServer(new Error('No server found, verify your proxy/network'));
-    }
-    var server = servers.settings.servers[0].server
-      , serverIndex
-      ;
-
-    servers = [];
-    for (serverIndex = 0; serverIndex < server.length; serverIndex++) {
-      if (options.serverId && server[serverIndex].$.id === options.serverId) {
-        servers = [server[serverIndex].$];
-        break;
+  function handleLine(isError, line) {
+    if (aborted) return;
+    if (/^{/.test(line)) {
+      let data;
+      try {
+        data = JSON.parse(line);
+      } catch (err) {
+        // Ignore
       }
-      servers.push(server[serverIndex].$);
-    }
-
-    speedInfo.servers = servers;
-
-    self.emit('servers', servers);
-    gotData();
-  }
-
-  function gotData() {
-    if (!speedInfo.config || !speedInfo.servers) return; //not ready yet
-
-    //order servers by how close they are:
-    var servers = speedInfo.servers
-      , serverIndex
-      , server
-      , dist
-      ;
-
-    for (serverIndex = 0; serverIndex < servers.length; serverIndex++) {
-      server = servers[serverIndex];
-      dist = distance(speedInfo.config.client, server);
-
-      server.dist = dist;
-      server.distMi = dist * 0.621371;
-    }
-
-    servers.sort(function(a, b) {
-      return (a.dist - b.dist);
-    });
-
-    pingServers(servers, options.pingCount, function(err, bestServers) {
-      if (err) return self.emit('error', err);
-      if (!bestServers || !bestServers.length) return self.emit('error', new Error('Could not find a server to test on.'));
-
-      speedInfo.bestServers = bestServers;
-      speedInfo.bestServer = speedInfo.bestServers[0];
-      self.emit('bestservers', bestServers);
-
-      startDownload();
-    });
-  }
-
-  function startDownload(ix) {
-    ix = ix || 0;
-    if (ix >= speedInfo.bestServers.length || ix >= options.maxServers) return startUpload();
-    var server = speedInfo.bestServers[ix]
-      , svrurl = server.url
-      , sizes  = [350, 500, 750, 1000, 1500, 2000, 2500, 3000, 3500, 4000]
-      , urls   = []
-      , n
-      , i
-      , size
-      ;
-
-    for (n = 0; n < sizes.length; n++) {
-      size = sizes[n];
-      for (i = 0; i < 4; i++) {
-        urls.push(url.resolve(svrurl, 'random' + size + 'x' + size + '.jpg'));
-      }
-    }
-
-    self.emit('testserver', server);
-
-    downloadSpeed.call(self, urls, options.maxTime, function(err, speed) {
-      if (err) return self.emit('error', err);
-      var fixed = speed * speedTestDownloadCorrectionFactor / 125000;
-      self.emit('downloadprogress', 100);
-      self.emit('downloadspeed', fixed);
-
-      if (speedInfo.downloadSpeed) {
-        if (speed > speedInfo.downloadSpeed) {
-          speedInfo.downloadSpeed = speed;
-          speedInfo.speedTestDownloadSpeed = fixed;
-          speedInfo.bestServer = server;
+      if (data) {
+        if (data.timestamp) {
+          data.timestamp = new Date(data.timestamp);
         }
-      } else {
-        speedInfo.downloadSpeed = speed;
-        speedInfo.speedTestDownloadSpeed = fixed;
-      }
-
-      startDownload(ix + 1);
-    });
-  }
-
-  function startUpload() {
-    var sizes     = []
-      , sizesizes = [
-        Math.round(0.25 * 1000 * 1000),
-        Math.round(0.5 * 1000 * 1000),
-        Math.round(1 * 1000 * 1000),
-        Math.round(2 * 1000 * 1000),
-        Math.round(4 * 1000 * 1000),
-        Math.round(8 * 1000 * 1000),
-        Math.round(16 * 1000 * 1000),
-        Math.round(32 * 1000 * 1000)
-      ]
-      , sizesize
-      , n
-      , i
-      ;
-
-    for (n = 0; n < sizesizes.length; n++) {
-      sizesize = sizesizes[n];
-      for (i = 0; i < 25; i++) {
-        sizes.push(sizesize);
-      }
-    }
-    self.emit('testserver', speedInfo.bestServer);
-    uploadSpeed.call(self, speedInfo.bestServer.url, sizes, options.maxTime, function(err, speed) {
-      if (err) return self.emit('error', err);
-      speedInfo.uploadSpeed = speed;
-      speedInfo.speedTestUploadSpeed = speed * speedTestUploadCorrectionFactor / 125000;
-      self.emit('uploadprogress', 100);
-      self.emit('uploadspeed', speedInfo.speedTestUploadSpeed);
-
-      //emit results as nice, clean, object
-
-      /*
-      { url: 'http://208.54.87.70/speedtest/upload.jsp',
-        lat: '40.9419',
-        lon: '-74.2506',
-        name: 'Wayne, NJ',
-        country: 'United States',
-        cc: 'US',
-        sponsor: 'T-Mobile',
-        id: '1861',
-        host: '208.54.87.70:8080',
-        dist: 114.3911751633326,
-        bestPing: 37.36689500000001 }
-      */
-
-      function num(name) {
-        speedInfo.config.client[name] = parseFloat(speedInfo.config.client[name]);
-      }
-
-      num('lat');
-      num('lon');
-      num('isprating');
-      num('rating');
-      num('ispdlavg');
-      num('ispulavg');
-
-      delete speedInfo.config.client.loggedin; //We're never logged in, so this is useless.
-
-      //Convert to megabits/s
-      speedInfo.config.client.ispdlavg /= 1000;
-      speedInfo.config.client.ispulavg /= 1000;
-
-      var best = speedInfo.bestServer
-        , data = {
-          speeds: {
-            //Rounding, because these numbers look way more accurate than they are...
-            download: Math.round(speedInfo.speedTestDownloadSpeed * 1000) / 1000,
-            upload: Math.round(speedInfo.speedTestUploadSpeed * 1000) / 1000,
-            originalDownload: Math.round(speedInfo.downloadSpeed),
-            originalUpload: Math.round(speedInfo.uploadSpeed)
-          },
-          client: speedInfo.config.client,
-          server: {
-            host: url.parse(best.url).host,
-            lat: Number(best.lat),
-            lon: Number(best.lon),
-            location: best.name,
-            country: best.country,
-            cc: best.cc,
-            sponsor: best.sponsor,
-            distance: Math.round(best.dist * 100) / 100,
-            distanceMi: Math.round(best.distMi * 100) / 100,
-            ping: Math.round(best.bestPing * 10) / 10,
-            id: best.id
+        if (data.type) {
+          const content = data[data.type];
+          if (content) {
+            if (currentPhase !== data.type && progressPhases[data.type]) {
+              priorProgress += progressPhases[currentPhase] || 0;
+              currentPhase = data.type;
+            }
+            if (typeof content.progress === 'number' && progressPhases[data.type]) {
+              data.progress = priorProgress + progressPhases[data.type] * content.progress;
+            }
+          }
+        } else {
+          if (data.suite || data.app || data.servers) {
+            data.type = 'config';
           }
         }
-        ;
-
-      self.emit('data', data);
-      postResults();
-    });
-  }
-
-  function postResults() {
-    var best      = speedInfo.bestServer
-      , md5       = function(v) {
-        return require('crypto').createHash('md5').update(v).digest('hex');
+        if (data.progress === undefined) {
+          data.progress = priorProgress;
+        }
+        lastProgress = data.progress = Math.max(data.progress, lastProgress);
+        if (data.error) {
+          return reject(new Error(data.error));
+        }
+        if (data.type === 'log' && data.level === 'error') {
+          return reject(new Error(data.message));
+        }
+        if (data.type === 'result') {
+          delete data.progress;
+          delete data.type;
+          result = data;
+          return;
+        }
+        if (progress) {
+          progress(data);
+        }
+        return;
       }
-      , dlspeedk  = Math.round(speedInfo.speedTestDownloadSpeed * 1000)
-      , ulspeedk  = Math.round(speedInfo.speedTestUploadSpeed * 1000)
-      , ping      = Math.round(best.bestPing)
-      , res       = [
-        'download', dlspeedk,
-        'ping', ping,
-        'upload', ulspeedk,
-        'promo', '',
-        'startmode', 'pingselect', //or flyok, recommendedselect
-        'recommendedserverid', best.id,
-        'accuracy', 1,
-        'serverid', best.id,
-        'hash', md5(ping + '-' + ulspeedk + '-' + dlspeedk + '-297aae72')
-      ]
-      , reportUrl = 'http://www.speedtest.net/api/api.php'
-      , prms      = []
-      , opts
-      , n
-      ;
-
-    for (n = 0; n < res.length; n += 2) {
-      prms.push(res[n] + '=' + encodeURIComponent(res[n + 1]));
     }
-
-    opts = httpOpts(reportUrl);
-
-    opts.headers.referer = 'http://c.speedtest.net/flash/speedtest.swf';
-
-    postHttp(opts, prms.join('&'), function(err, data, status) {
-      if (err) return self.emit('error', err);
-      var match = String(data).match(/^resultid=(\d+)(&|$)/), resultUrl;
-      if (status === 200 && match && match[1]) { //I get '0', don't know why. No one knows why.
-        resultUrl = 'http://www.speedtest.net/result/' + match[1] + '.png';
+    if (!line.trim()) return;
+    if (isError) {
+      if (!/] \[(info|warning)]/.test(line)) {
+        errorLines.push(line);
       }
-
-      speedInfo.resultUrl = resultUrl;
-
-      self.emit('result', resultUrl);
-      self.emit('done', speedInfo);
-    });
-  }
-
-  return self;
-}
-
-module.exports = speedTest;
-
-function visualSpeedTest(options, callback) {
-  require('draftlog').into(console);
-
-  // We only need chalk and DraftLog here. Lazy load it.
-  var chalk = require('chalk')
-    , test = speedTest(options)
-    , log  = function() {}
-    , finalData
-    , percentage = 0
-    , speed = 0
-    , bar = console.draft()
-    , size = 50
-    , red = (chalk.supportsColor ? chalk.bgRed(' ') : '─')
-    , green = (chalk.supportsColor ? chalk.bgGreen(' ') : '▇')
-    ;
-
-  callback = once(callback);
-
-  if (options.log) {
-    if (typeof options.log === 'function') {
-      log = options.log;
-    } else {
-      log = console.log.bind(console);
     }
   }
-
-  test.on('error', function(err) {
-    callback(err);
-  });
-
-  test.on('testserver', function(server) {
-    log('Using server by ' + server.sponsor + ' in ' + server.name + ', ' + server.country + ' (' + (server.distMi * 0.621371).toFixed(0) + 'mi, ' + (server.bestPing).toFixed(0) + 'ms)');
-  });
-
-  test.on('config', function(config) {
-    var client = config.client;
-    log('Testing from ' + client.ip + ' at ' + client.isp + ', expected dl: ' + (client.ispdlavg / 8000).toFixed(2) + 'MB/s, expected ul: ' + (client.ispulavg / 8000).toFixed(2) + 'MB/s');
-  });
-
-  function prog(what, pct, spd) {
-    percentage = pct || percentage;
-    speed = spd || speed;
-
-    var complete = Math.round(percentage / 100 * size)
-      , barStr = ''
-      ;
-
-    // What + padding
-    barStr += what;
-    barStr += ' '.repeat(12 - what.length);
-
-    // Bar
-    barStr += green.repeat(complete);
-    barStr += red.repeat(size - complete);
-
-    // Percent
-    pct = percentage + '%';
-    barStr += ' ' + pct;
-
-    // Speed
-    barStr += ' '.repeat(8 - pct.length) + speed;
-
-    bar(barStr);
-  }
-
-  test.on('downloadprogress', function(pct) {
-    prog('download', pct, null);
-  });
-
-  test.on('uploadprogress', function(pct) {
-    prog('upload', pct, null);
-  });
-
-  test.on('downloadspeed', function(speed) {
-    log('Download speed: ', speed.toFixed(2) + 'Mbps');
-
-    // Create a new line after each new download
-    bar = console.draft();
-  });
-
-  test.on('uploadspeed', function(speed) {
-    log('Upload speed: ', speed.toFixed(2) + 'Mbps');
-
-    // Create a new line after each new upload
-    bar = console.draft();
-  });
-
-  test.on('downloadspeedprogress', function(speed) {
-    prog('download', null, speed.toFixed(2) + 'Mbps');
-  });
-
-  test.on('uploadspeedprogress', function(speed) {
-    prog('upload', null, speed.toFixed(2) + 'Mbps');
-  });
-
-  test.on('data', function(data) {
-    finalData = data;
-  });
-
-  test.on('result', function(url) {
-    log('Results url: ' + url);
-  });
-
-  test.on('done', function() {
-    callback(null, finalData);
-  });
-
-  return test;
 }
 
-speedTest.visual = visualSpeedTest;
+module.exports = exec;
+exec.defaultBinaryVersion = defaultBinaryVersion;

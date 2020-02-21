@@ -13,7 +13,6 @@ npm install --save speedtest-net
 $ npm install --global speedtest-net
 $ speedtest-net
 ```
-
 ## Usage
 
 The whole speed test runs automatically, but a lot of events are available
@@ -26,313 +25,253 @@ progress bar and optional information output as well.
 
 Code use example:
 ```js
-var speedTest = require('speedtest-net');
-var test = speedTest({maxTime: 5000});
+const speedTest = require('speedtest-net');
 
-test.on('data', data => {
-  console.dir(data);
-});
-
-test.on('error', err => {
-  console.error(err);
-});
+(async () => {
+  try {
+    console.log(await speedTest());
+  } catch (err) {
+    console.log(err.message);
+  } finally {
+    process.exit(0);
+  }
+})();
 
 ```
 
-Visual use example:
-```js
-var speedTest = require('speedtest-net');
+## CLI options
+Usage: `speedtest-net [-h|--help] [--accept-license] [--server-id <id>] [--source-ip <ip>]`
 
-speedTest.visual({maxTime: 5000}, (err, data) => {
-  console.dir(data);
-});
-```
+- **`-h`**, **`--help`**: Help
+- **`--accept-license`**: Accept the Ookla EULA, TOS and Privacy policy. The terms only need to be accepted once.
+- **`--server-id <id>`**: Test using a specific server by Ookla server ID
+- **`--source-ip <ip>`**: Test a specific network interface identified by local IP
 
-## Options
+## Module use options
 
 You can pass an optional `options` object.
 
 The options include:
-  - **`proxy`**: _`string`_ The proxy for upload or download, support http and https (example : "http://proxy:3128")
-  - **`maxTime`**: _`number`_ The maximum length (in ms) of a single test run (upload or download)
-  - **`pingCount`**: _`number`_ The number of close servers to ping to find the fastest one
-  - **`maxServers`**: _`number`_ The number of servers to run a download test on. The fastest is used for the upload test and the fastest result is reported at the end.
-  - **`headers`**: _`object`_ Headers to send to speedtest.net
-  - **`log`**: _`boolean`_ (Visual only) Pass a truthy value to allow the run to output results to the console in addition to showing progress, or a function to be used instead of `console.log`.
+
   - **`serverId`**: _`string`_ ID of the server to restrict the tests against.
-  - **`serversUrl`**: _`string`_ URL to obtain the list of servers available for speed test. (default: http://www.speedtest.net/speedtest-servers-static.php)
-* `sourceIp` The source IP to bind for testing with speedtest.net.
+  - **`sourceIp`** _`string`_ IP of the network interface to bind
+  - **`progress`** _`function`_ Function to handle progress events
+  - **`binary`** _`string`_ Binary executable path of the Ookla speedtest CLI
+  - **`binaryVersion`** _`string`_ *Default `'1.0.0'`* Binary executable version
+  - **`host`** _`string`_ Server host to connect to
+  - **`verbosity`** _`number`_ Log level for `{ type: log }` progress events
+  - **`acceptLicense`** _`boolean`_ Set to `true` to accept the Ookla EULA, TOS and Privacy policy. This must be done (at least) once on the system. If you have not accepted the Ookla license terms, you can view the links to their agreements by running the speedtest-net CLI without the `--accept-license` option.
 
-## Proxy by env
+## Progress Events
 
-### You can set proxy with env var
+Each progress event has a `type` property wich will be one of:
 
-Code use example for cli:
-```bash
-$ npm install --global speedtest-net
-$ set HTTP_PROXY=http://proxy:3128
-$ speedtest-net
-```
+- `'config'`
+- `'log'`
+- `'testStart'`
+- `'ping'`
+- `'download'`
+- `'upload'`
 
-Code use example for node:
-```js
-process.env["HTTP_PROXY"] =  process.env["http_proxy"] = "http://proxy:3128";
-//process.env["HTTPS_PROXY"] = process.env["https_proxy"] = "https://proxy:3128";
+Each event contains a `progress` property at the root which indicates the overall progress of the test as a fraction (0 to 1).
 
-var speedTest = require('speedtest-net');
-var test = speedTest({maxTime: 5000});
+The `ping`, `download` and `upload` events also contain a `progress` property insude the content data object (with the same name as the event name) which indicates the progress of the current test.
 
-test.on('data', data => {
-  console.dir(data);
-});
+All events except `config` contain a `timestamp` property which will be a `Date` object.
 
-test.on('error', err => {
-  console.error(err);
-});
-
-```
-
-### You can set proxy by options
-
-Code use example for cli:
-```bash
-$ npm install --global speedtest-net
-$ speedtest-net --proxy "http://proxy:3128"
-```
-
-Code use example for node:
-```js
-var speedTest = require('speedtest-net');
-var test = speedTest({maxTime: 5000, proxy : "http://proxy:3128"});
-
-test.on('data', data => {
-  console.dir(data);
-});
-
-test.on('error', err => {
-  console.error(err);
-});
-
-```
-### Proxy priority
-  - `proxy by options`
-  - `proxy by HTTP_PROXY env var`
-  - `proxy by HTTPS_PROXY env var`
-
-
-## Events
-
-There are a number of events available during the test:
-
-### downloadprogress
-
-Fired when data is downloaded.
-The progress in percent is passed.
-
-Note that if more than 1 server is used for download testing, this
-will run to 100% multiple times.
-
+### Config event
+This event **is only sent** when the `verbosity` is 2 or greater. It contains a bunch of information about the test:
 
 ```js
-require('speedtest-net')().on('downloadprogress', progress => {
-  console.log('Download progress:', progress);
-});
+{
+  type: 'config',
+  progress: 0,
+  suite: {
+    global: {
+      engine: {
+        threadCount: 4,
+        testDurationSeconds: 15,
+        packetSizeBytes: 32000000,
+        isUploadFirst: false
+      },
+      dynamic: {
+        stableStop: { isEnabled: true },
+        download: { isScalingEnabled: true, maxThreadCount: 32 }
+      }
+    },
+    testStage: {
+      latency: { pingCount: 5 },
+      upload: {
+        isServerUploadEnabled: true,
+        isClientPrimaryMeasureMethod: false
+      }
+    }
+  },
+  app: {
+    traceLevel: 2,
+    ispName: 'Slower Web Inc',
+    licenseKey: '408003aeea741916-C93ad77cb653213a5-a3d0efbb2e3723d4',
+    saveTestResultUrl: 'https://results.speedtest.net/reports',
+    resultFormat: 'json',
+    license: {
+      message: 'You may only use this Speedtest software and information generated\nfrom it for personal, non-commercial use, through a command line\ninterface on a personal computer. Your use of this software is subject\nto the End User License Agreement, Terms of Use and Privacy Policy at\nthese URLs:\n\n\thttps://www.speedtest.net/about/eula\n\thttps://www.speedtest.net/about/terms\n\thttps://www.speedtest.net/about/privacy',
+      version: 'a754f1d8862e34fda3a580af273344e3b7b892fb5a8eb755f1f639aaf8b30bdf'
+    }
+  },
+  servers: [
+    {
+      id: '1234',
+      host_functional: '1',
+      host: 'speedtest.someserver.net:8080',
+      name: 'Awesome test server',
+      country: 'United States',
+      sponsor: 'United people of the world'
+    },
+    {
+      id: '1235',
+      host_functional: '1',
+      host: 'supertestserver.net:8080',
+      name: 'Cruddy test server',
+      country: 'United States',
+      sponsor: 'Some company'
+    }
+  ]
+}
 ```
 
-### uploadprogress
+### Log event
 
-Fired when data is uploaded.
-The progress in percent is passed.
+These are various log messages. Only sent when `verbosity` is 1 or greater. Higher verbosity leads to more messages. That's all I know.
+
+Each log is associated with a log level. Levels include `info` and `warning` and may include others.
 
 ```js
-require('speedtest-net')().on('uploadprogress', progress => {
-  console.log('Upload progress:', progress);
-});
+{
+  type: 'log',
+  progress: 0.7391304347826086,
+  timestamp: [Date],
+  message: 'Starting stage 3 of type 4',
+  level: 'info'
+}
 ```
 
-### error
+### Test start Event
 
-Fired when an error occurs.
-The error is passed.
-
-```js
-require('speedtest-net')().on('error', err => {
-  console.log('Speed test error:');
-  console.error(err);
-});
-```
-
-### config
-
-Fired when the configuration has been fetched from the speedtest server.
-The config is passed.
+This contains information about the test to be run.
 
 ```js
-require('speedtest-net')().on('config', config => {
-  console.log('Configuration info:');
-  console.dir(config);
-});
-```
-
-### servers
-
-Fired when the list of servers has been fetched from the speedtest server.
-The list of server objects is passed.
-
-```js
-require('speedtest-net')().on('servers', servers => {
-  console.log('Complete list of all available servers:');
-  console.dir(servers);
-});
-```
-
-### bestservers
-
-Fired after closest servers are pinged.
-An ordered list of server objects is passed, fastest first.
-
-```js
-require('speedtest-net')().on('bestservers', servers => {
-  console.log('Closest servers:');
-  console.dir(servers);
-});
-```
-
-### testserver
-
-Fired before download or upload is started on a server.
-The server object is passed.
-
-```js
-require('speedtest-net')().on('testserver', server => {
-  console.log('Test server:');
-  console.dir(server);
-});
-```
-
-### downloadspeed
-
-Fired when a download speed is found.
-When testing on multiple servers, it's fired multiple times.
-The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results.
-The associated server is the server passed in the last `testserver` event.
-
-```js
-require('speedtest-net')().on('downloadspeed', speed => {
-  console.log('Download speed:', (speed * 125).toFixed(2), 'KB/s');
-});
-```
-
-### uploadspeed
-
-Fired when the upload speed is found.
-The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results.
-The associated server is the server passed in the last `testserver` event, which will be the fastest server from download test(s).
-
-```js
-require('speedtest-net')().on('uploadspeed', speed => {
-  console.log('Upload speed:',(speed * 125).toFixed(2),'KB/s');
-});
-```
-
-### downloadspeedprogress
-Fired before final download has completed to show download speed in progress, and is fired multiple times. The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results. The associated server is the server passed in the most recent testserver event.
-
-```js
-require('speedtest-net')().on('downloadspeedprogress', speed => {
-  console.log('Download speed (in progress):', (speed * 125).toFixed(2), 'KB/s');
-});
-```
-
-### uploadspeedprogress
-Fired before final download has completed to show upload speed in progress, and is fired multiple times. The speed in megabits (1 million bits) per second is passed, after it is corrected to be in line with speedtest.net results. The associated server is the server passed in the most recent testserver event.
-
-```js
-require('speedtest-net')().on('uploadspeedprogress', speed => {
-  console.log('Upload speed (in progress):', (speed * 125).toFixed(2), 'KB/s');
-});
-```
-
-### result
-
-Fired when the data has been uploaded to SpeedTest.net server.
-The url of the result is passed, or `undefined` on error.
-
-```js
-require('speedtest-net')().on('result', url => {
-  if (!url) {
-    console.log('Could not successfully post test results.');
-  } else {
-    console.log('Test result url:', url);
+{
+  type: 'testStart',
+  progress: 0,
+  timestamp: [Date],
+  isp: 'Slower Web Inc',
+  interface: {
+    internalIp: '10.1.1.10',
+    name: '',
+    macAddr: '00:FE:C1:12:4A:ZX',
+    isVpn: false,
+    externalIp: '104.1.1.17'
+  },
+  server: {
+    id: 1234,
+    host_functional: '1',
+    name: 'Awesome test server',
+    location: 'New York, NY',
+    country: 'United States',
+    host: 'speedtest.someserver.net:8080',
+    port: 8080,
+    ip: '192.1.1.3'
   }
-});
+}
 ```
 
-
-### data
-
-Fired when tests are done with all relevant information.
-The data is passed.
+### Ping event
+Sent when the test is in the ping phase. Jitter and latency are in milliseconds.
 
 ```js
-require('speedtest-net')().on('data', data => {
-  console.dir(data);
-});
+{
+  type: 'ping',
+  progress: 0.034782608695652174,
+  timestamp: [Date],
+  ping: { jitter: 1.297, latency: 12.363, progress: 0.4 }
+}
 ```
 
-The returned data is a nested object with the following properties:
-
-  - **`speeds`**:
-    - `download`: download bandwidth in megabits per second
-    - `upload`: upload bandwidth in megabits per second
-    - `originalDownload`: unadjusted download bandwidth in bytes per second
-    - `originalUpload`: unadjusted upload bandwidth in bytes per second
-
-  - **`client`**:
-    - `ip`: ip of client
-    - `lat`: latitude of client
-    - `lon`: longitude of client
-    - `isp`: client's isp
-    - `isprating`: some kind of rating
-    - `rating`: another rating, which is always 0 it seems
-    - `ispdlavg`: avg download speed by all users of this isp in Mbps
-    - `ispulavg`: same for upload
-
-  - **`server`**:
-    - `host`: test server url
-    - `lat`: latitude of server
-    - `lon`: longitude of server
-    - `location`: name of a location, usually a city, but can be anything
-    - `country`: name of the country
-    - `cc`: country code
-    - `sponsor`: who pays for the test server
-    - `distance`: distance from client to server (SI)
-    - `distanceMi`: distance from client to server (Imperial)
-    - `ping`: how long it took to download a small file from the server, in ms
-    - `id`: the id of the server
-
-### done
-
-Fired when the test are done.
-An object with too much data is passed.
-Note that it is not fired when an error occurs.
+### Download event
+Sent when the test is in the download phase. Bandwidth is in bytes per second.
 
 ```js
-require('speedtest-net')().on('done', dataOverload => {
-  console.log('TL;DR:');
-  console.dir(dataOverload);
-  console.log('The speed test has completed successfully.');
-});
+{
+      type: 'download',
+      progress: 0.205523,
+      timestamp: [Date],
+      download: {
+        bandwidth: 116904636,
+        bytes: 334816510,
+        elapsed: 2727,
+        progress: 0.18180193333333333
+      }
+    }
+```
+
+### Upload event
+Sent when the test is in the upload phase. Bandwidth is in bytes per second.
+
+```js
+{
+  type: 'upload',
+  progress: 0.8351304347826086,
+  timestamp: [Date],
+  upload: {
+    bandwidth: 3625125,
+    bytes: 19799551,
+    elapsed: 5520,
+    progress: 0.368
+  }
+}
+```
+
+## Return value
+The `speedTest` function returns a promise that resolves to an object with the following shape:
+
+```js
+{
+  timestamp: [Date],
+  ping: { jitter: 1.022, latency: 12.363 },
+  download: { bandwidth: 87757724, bytes: 959666451, elapsed: 10804 },
+  upload: { bandwidth: 3701179, bytes: 35468808, elapsed: 9703 },
+  packetLoss: 8.837209302325581,
+  isp: 'Slower Web Inc',
+  interface: {
+    internalIp: '10.1.1.10',
+    name: '',
+    macAddr: '00:FE:C1:12:4A:ZX',
+    isVpn: false,
+    externalIp: '104.1.1.17'
+  },
+  server: {
+    id: 1234,
+    host_functional: '1',
+    name: 'Awesome test server',
+    location: 'New York, NY',
+    country: 'United States',
+    host: 'speedtest.someserver.net:8080',
+    port: 8080,
+    ip: '192.1.1.3'
+  },
+  result: {
+    id: 'd5ac8c40-3d69-39ac-cfc1-3b349df780e9',
+    url: 'https://www.speedtest.net/result/c/d5ac8c40-3d69-39ac-cfc1-3b349df780e9'
+  }
+}
 ```
 
 ## Considerations
+This uses the official Ookla command line client so the results should be the same as the speedtest.net tests you can run in the browser.
 
-The test results are fudged to be in-line with what speedtest.net (owned by Ookla) produces. Please see the
-[Ookla test flow](http://www.ookla.com/support/a21110547/what+is+the+test+flow+and) description to find out why it is
-necessary to do this. It is certainly possible to copy Ookla's test method in node.js, but it's a significant job.
+When running the speed test for the first time you may get an error indicating you need to accept the Ookla license terms. For the CLI you can pass the `--accept-license` option. For the module, you can pass the `{ acceptLicense: true }` option.
 
-The test results use correction factors which were derived by dividing bitrates recorded from speedtest.net by raw bitrates recorded using this module, using averages over a statistically insufficient number of tests. Even in consideration of this, the current method is likely to produce very similar results as speedtest.net, as long as the internet connection with
-the server has a relatively low [packet jitter](http://en.wikipedia.org/wiki/Jitter#Packet_jitter_in_computer_networks).
+When running the test for the first time, and a CLI binary is not yet available, the client will be automatically downloaded from the Ookla server and unpacked. The file will then be marked as executable. This step may fail if the calling process does not have sufficient permissions. To get around this, you can pass either a custom `binary` option (module only), or manually mark the file as executable. The latter option is not recommended since this can break if you need to run `npm install` or `yarn`.
 
 ## License
 

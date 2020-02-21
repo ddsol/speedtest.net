@@ -1,87 +1,59 @@
 #!/usr/bin/env node
+'use strict';
 require('draftlog').into(console).addLineListener(process.stdin);
-var chalk = require('chalk');
-var SpeedTestNet = require('../');
+const chalk = require('chalk');
+const speedTest = require('../');
 
-/*
- * Keep track of current UI State
- */
-var header, speeds, locate;
-var step = 'Ping';
-var statuses = {
+let header;
+let speeds;
+let step = 'Ping';
+const statuses = {
   Ping: true,
   Download: false,
   Upload: false,
 };
 
-/*
- * Renders the header and Speeds (one below the other)
- */
-var width = 24;
+const width = 24;
 function updateLines() {
-  var spinner = Spinner();
-  var headerTxt = renderHeader(statuses, step);
-  var speedsTxt = renderStatus(statuses, step, spinner);
+  const spinner = makeSpinner();
+  const headerTxt = renderHeader(statuses, step);
+  const speedsTxt = renderStatus(statuses, step, spinner);
 
   header('│' + headerTxt + '│');
   speeds('│' + speedsTxt + '│');
 }
 
-/*
- * Renders the Header (Showing PING DOWNLOAD UPLOAD) with it's colors and spacings
- */
 function renderHeader(statuses) {
-  var txt = '';
+  let txt = '';
 
-  // Build Header
-  for (var k in statuses) {
-    var status = statuses[k];
+  for (const k of Object.keys(statuses)) {
+    const status = statuses[k];
 
-    // Create header
-    var col = centerText(k, width);
-
-    // Set header status color
+    let col = centerText(k, width);
     if (status === false) {
       col = chalk.dim(col);
     } else {
-      col = chalk.white(col);
+      col = chalk.white.bold(col);
     }
-
     txt += col;
   }
 
   return txt;
 }
 
-/*
- * Renders the Status line (Showing Ping/Download/Upload results) with it's colors and spacings
- */
-function renderStatus(statuses, step, spinner){
-  var txt = '';
+function renderStatus(statuses, step, spinner) {
+  let txt = '';
+  for (const k of Object.keys(statuses)) {
+    let status = statuses[k];
+    status = String(status === Boolean(status) ? '' : status);
 
-   // Build Status
-  for (var k in statuses) {
-    var status = statuses[k];
-
-    // Account for status where it's false/true
-    // (indicating not started and not received value yet)
-    status = status === false ? '' : status;
-    status = status === true  ? '' : status;
-    status = status + '';
-
-    // Put spinner if no info
     if (!status) {
       status = spinner + ' ';
     }
 
-    // Create status text
     status = centerText(status, width);
-
-    // Dim unitis
-    status = status.replace(/(Mbps|ms)/gi, chalk.dim('$1'));
-
-    // If it's the current step, show as yellow
-    if (step == k) {
+    status = status.replace(/([KMGT]bps|ms)/gi, chalk.dim('$1'));
+    if (step === k) {
       status = chalk.yellow(status);
     } else {
       status = chalk.blue(status);
@@ -89,19 +61,15 @@ function renderStatus(statuses, step, spinner){
 
     txt += status;
   }
-
   return txt;
 }
 
-/*
- * Pad Left/Right with same amount of spaces n times. compensate for odd numbers
- */
 function centerText(text, n, length) {
   // Account for text length first
   n -= length || text.length;
 
   // Pad to be even
-  if (n % 2 == 1) {
+  if (n % 2 === 1) {
     text = ' ' + text;
   }
 
@@ -109,30 +77,25 @@ function centerText(text, n, length) {
   n = Math.floor(n / 2);
 
   // Make spacer
-  var spacer = ' '.repeat(n);
+  const spacer = ' '.repeat(n);
 
   // Fill in text
   return spacer + text + spacer;
 }
 
-/*
- * Converts a number to speed (in Mbps)
- */
 function speedText(speed) {
-  // Depending on the speed, show more places
-  var places = ( speed < 2 ? 3 : 1);
-
-  // Make it fixed
-  var str = speed.toFixed(places);
-
-  // Concat with unit
-  return str + ' Mbps';
+  let bits = speed * 8;
+  const units = ['', 'K', 'M', 'G', 'T'];
+  const places = [0, 1, 2, 3, 3];
+  let unit = 0;
+  while (bits >= 2000 && unit < 4) {
+    unit++;
+    bits /= 1000;
+  }
+  return `${bits.toFixed(places[unit])} ${units[unit]}bps`;
 }
 
-/*
- * Function that return state of Spinner, and change its state with time
- */
-var frames = [
+const frames = [
   '+---',
   '-+--',
   '--+-',
@@ -140,8 +103,8 @@ var frames = [
   '--+-',
   '-+--',
 ];
-var lastChange = 0;
-function Spinner(){
+let lastChange = 0;
+function makeSpinner() {
   if (Date.now() > lastChange + 30) {
     frames.unshift(frames.pop());
     lastChange = Date.now();
@@ -149,114 +112,92 @@ function Spinner(){
   return frames[0];
 }
 
-/*
- * Shows CLI UI
- */
+const empty = () => console.log('│' + ' '.repeat(width * 3) + '│');
 console.log();
 console.log('┌' + '─'.repeat(width * 3) + '┐');
-console.log('│' + ' '.repeat(width * 3) + '│');
-locate = console.draft('│' + ' '.repeat(width * 3) + '│');
-console.log('│' + ' '.repeat(width * 3) + '│');
+empty();
+console.draft('│' + ' '.repeat(width * 3) + '│');
+empty();
 header = console.draft();
 speeds = console.draft();
-console.log('│' + ' '.repeat(width * 3) + '│');
-console.log('│' + ' '.repeat(width * 3) + '│');
+empty();
+empty();
 console.log('└' + '─'.repeat(width * 3) + '┘');
 console.log();
 console.log();
 
 updateLines();
 
-/*
- * Start speed test
- */
+const options = {};
 
-var options = {
-  maxTime: 10000,
-  proxy: null,
-  sourceIp: null,
-};
-
-/*
- * get parameters
- */
-var errorParameter = null;
-process.argv.forEach(function (val, index, array) {
-  if (index >= 2) {
-    if (val === '--proxy') {
-      if (array[index + 1] !== undefined) {
-        options.proxy = array[index + 1];
+let paramError = null;
+for (let i = 2; i < process.argv.length; i++) {
+  const arg = process.argv[i];
+  const next = process.argv[i + 1];
+  if (i >= 2) {
+    if (arg === '--help' || arg === '-h') {
+      console.log(`Usage: ${process.argv[1]} [-h|--help] [--accept-license] [--server-id <id>] [--source-ip <ip>]`);
+      console.log('-h  --help            Help');
+      console.log('    --accept-license  Accept the Ookla EULA, TOS and Privacy policy. ');
+      console.log('                      The terms only need to be accepted once.');
+      console.log('    --server-id <id>  Test using a specific server by Ookla server ID');
+      console.log('    --source-ip <ip>  Test a specific network interface identified by local IP');
+      process.exit(0);
+    } else if (arg === '--accept-license') {
+      options.acceptLicense = true;
+    } else if (arg === '--server-id') {
+      if (next !== undefined) {
+        i++;
+        options.serverId = next;
       } else {
-        errorParameter = 'Error: bad parameters';
+        paramError = 'Error: bad parameters';
       }
-    } else if (val === '--sourceip') {
-      if (array[index + 1] !== undefined) {
-        options.sourceIp = array[index + 1];
+    } else if (arg === '--source-ip') {
+      if (next !== undefined) {
+        i++;
+        options.sourceIp = next;
       } else {
-        errorParameter = 'Error: bad parameters';
+        paramError = 'Error: bad parameters';
       }
     }
   }
-});
-
-/*
- * interrupt if error (parameters)
- */
-if (errorParameter) {
-  console.log();
-  console.error(chalk.red(errorParameter));
-  console.log();
+}
+if (paramError) {
+  console.error();
+  console.error(chalk.red(paramError));
+  console.error();
   process.exit(1);
 }
 
-var test = SpeedTestNet(options);
-var interval = setInterval(updateLines, 100);
-var completedUpload = false;
-var completedDownload = false;
-
-test.on('downloadspeedprogress', function (speed){
-  if (!completedDownload) {
-    statuses.Download = speedText(speed);
+(async () => {
+  try {
+    setInterval(updateLines, 100);
+    await speedTest({
+      ...options,
+      progress: event => {
+        const content = event[event.type] || {};
+        switch (event.type) {
+          case 'ping':
+            step = 'Ping';
+            statuses.Ping = content.latency.toFixed(1) + ' ms';
+            break;
+          case 'download':
+            statuses.Download = speedText(content.bandwidth);
+            step = 'Download';
+            break;
+          case 'upload':
+            statuses.Upload = speedText(content.bandwidth);
+            step = 'Upload';
+            break;
+        }
+      }
+    });
+    step = 'Finished';
+    updateLines();
+  } catch (err) {
+    console.error(chalk.red(err.message.replace('acceptLicense: true', '--accept-license')));
+    process.exit(1);
+  } finally {
+    process.exit(0);
   }
-});
-
-test.on('uploadspeedprogress', function (speed){
-  if (!completedUpload) {
-    statuses.Upload = speedText(speed);
-  }
-});
-
-test.once('testserver', function (info){
-  // Round to 1 decimal place
-  var title = info.sponsor + ', ' + info.country + ' - ' + info.name;
-  title = centerText(title, width * 3);
-
-  locate('│' + chalk.yellow(title) + '│');
-
-  var ping = Math.round(info.bestPing * 10) / 10;
-  statuses.Ping = ping + ' ms';
-  step = 'Download';
-});
-
-test.once('downloadspeed', function (speed){
-  completedDownload = true;
-  step = 'Upload';
-  statuses.Download = speedText(speed);
-});
-
-test.once('uploadspeed', function (speed){
-  completedUpload = true;
-  step = 'Finished';
-  statuses.Upload = speedText(speed);
-});
-
-test.on('done', function () {
-  process.exit(0);
-});
-
-test.on('error', function (err) {
-  console.log();
-  console.error(chalk.red(err));
-  console.log();
-  process.exit(1);
-});
+})();

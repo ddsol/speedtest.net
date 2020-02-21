@@ -3,12 +3,15 @@
     "node": true,
     "browser": false,
     "builtin": true,
-    "es6": false
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2019
   },
   "rules": {
     "array-bracket-spacing": [2, "never"],
     "arrow-body-style": 0,
-    "arrow-parens": [2, "as-needed", { "requireForBlockBody": true }],
+    "arrow-parens": [2, "as-needed"],
     "arrow-spacing": [2, { "before": true, "after": true }],
     "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
     "camelcase": 2,
@@ -53,17 +56,27 @@
     "no-whitespace-before-property": 2,
     "no-with": 2,
     "object-curly-spacing": [2, "always"],
-    "one-var": [2, "always"],
+    "one-var": ["error", "never"],
     "padded-blocks": [2, "never"],
     "quotes": [2, "single", { "allowTemplateLiterals": true, "avoidEscape": true }],
+    "quote-props": [2, "as-needed"],
     "semi": [2, "always"],
     "space-before-blocks": 2,
-    "space-before-function-paren": [2, "never"],
+    "space-before-function-paren": [2, {
+      "anonymous": "never",
+      "named": "never",
+      "asyncArrow":  "always"
+    }],
     "space-in-parens": [2, "never"],
     "space-infix-ops": 2,
     "space-unary-ops": [2, { "words": true, "nonwords": false }],
     "strict": [2, "global"],
     "valid-typeof": 2,
-    "wrap-iife": [2, "inside"]
+    "wrap-iife": [2, "inside"],
+    "no-var": ["error"],
+    "prefer-const": ["error", {
+      "destructuring": "all",
+      "ignoreReadBeforeAssign": true
+    }]
   }
 }
