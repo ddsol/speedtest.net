@@ -136,7 +136,7 @@ for (let i = 2; i < process.argv.length; i++) {
   const next = process.argv[i + 1];
   if (i >= 2) {
     if (arg === '--help' || arg === '-h') {
-      console.log(`Usage: ${process.argv[1]} [-h|--help] [--accept-license] [--server-id <id>] [--source-ip <ip>]`);
+      console.log(`Usage: ${process.argv[1]} [-h|--help] [--accept-license] [--accept-gdpr] [--server-id <id>] [--source-ip <ip>]`);
       console.log('-h  --help            Help');
       console.log('    --accept-license  Accept the Ookla EULA, TOS and Privacy policy. ');
       console.log('    --accept-gdpr     Accepts the Ookla GDPR terms. ');
