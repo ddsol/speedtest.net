@@ -65,7 +65,7 @@ The options include:
 
 ## Progress Events
 
-Each progress event has a `type` property wich will be one of:
+Each progress event has a `type` property which will be one of:
 
 - `'config'`
 - `'log'`
@@ -76,7 +76,7 @@ Each progress event has a `type` property wich will be one of:
 
 Each event contains a `progress` property at the root which indicates the overall progress of the test as a fraction (0 to 1).
 
-The `ping`, `download` and `upload` events also contain a `progress` property insude the content data object (with the same name as the event name) which indicates the progress of the current test.
+The `ping`, `download` and `upload` events also contain a `progress` property inside the content data object (with the same name as the event name) which indicates the progress of the current test.
 
 All events except `config` contain a `timestamp` property which will be a `Date` object.
 
@@ -270,7 +270,7 @@ The `speedTest` function returns a promise that resolves to an object with the f
 ## Considerations
 This uses the official Ookla command line client so the results should be the same as the speedtest.net tests you can run in the browser.
 
-When running the speed test for the first time you may get an error indicating you need to accept the Ookla license terms. For the CLI you can pass the `--accept-license` option. For the module, you can pass the `{ acceptLicense: true }` option. If you're located in Europe you might need to accept the additional GDPR terms, this can be done by passing `--accept-gdpr` for the CLI and the `{ acceptGdpr: true }` option when used as a module.  
+When running the speed test for the first time you may get an error indicating you need to accept the Ookla license terms. For the CLI you can pass the `--accept-license` option. For the module, you can pass the `{ acceptLicense: true }` option. If you're located in Europe you might need to accept the additional GDPR terms, this can be done by passing `--accept-gdpr` for the CLI and the `{ acceptGdpr: true }` option when used as a module.
 
 When running the test for the first time, and a CLI binary is not yet available, the client will be automatically downloaded from the Ookla server and unpacked. The file will then be marked as executable. This step may fail if the calling process does not have sufficient permissions. To get around this, you can pass either a custom `binary` option (module only), or manually mark the file as executable. The latter option is not recommended since this can break if you need to run `npm install` or `yarn`.
 
