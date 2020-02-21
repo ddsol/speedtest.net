@@ -208,6 +208,7 @@ function pendingPromise() {
 async function exec(options = {}) {
   const {
     acceptLicense = false,
+    acceptGdpr = false,
     progress = () => {},
     serverId,
     sourceIp,
@@ -223,6 +224,9 @@ async function exec(options = {}) {
   if (options.progress) args.push('-p');
   if (acceptLicense) {
     args.push('--accept-license');
+  }
+  if (acceptGdpr) {
+    args.push('--accept-gdpr');
   }
   if (serverId) {
     args.push('-s', serverId);
@@ -261,9 +265,12 @@ async function exec(options = {}) {
   if (errorLines.length) {
     let error = errorLines.join('\n');
     error = error.replace(/===*.*====*\nLicense acceptance recorded. Continuing.\n?/, '');
-    const acceptanceMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-license/;
-    if (acceptanceMessage.test(error)) {
-      error = error.replace(acceptanceMessage, 'To accept the message, pass the acceptLicense: true option');
+    const acceptLicenseMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-license/;
+    const acceptGdprMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-gdpr/;
+    if (acceptLicenseMessage.test(error)) {
+      error = error.replace(acceptLicenseMessage, 'To accept the message, pass the acceptLicense: true option');
+    } else if (acceptGdprMessage.test(error)) {
+      error = error.replace(acceptGdprMessage, 'To accept the message, pass the acceptGdpr: true option');
     } else {
       error = error.replace(/===*[\s\S]*about\/privacy\n?/, '');
     }

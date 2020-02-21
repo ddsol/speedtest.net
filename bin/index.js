@@ -139,12 +139,15 @@ for (let i = 2; i < process.argv.length; i++) {
       console.log(`Usage: ${process.argv[1]} [-h|--help] [--accept-license] [--server-id <id>] [--source-ip <ip>]`);
       console.log('-h  --help            Help');
       console.log('    --accept-license  Accept the Ookla EULA, TOS and Privacy policy. ');
+      console.log('    --accept-gdpr     Accepts the Ookla GDPR terms. ');
       console.log('                      The terms only need to be accepted once.');
       console.log('    --server-id <id>  Test using a specific server by Ookla server ID');
       console.log('    --source-ip <ip>  Test a specific network interface identified by local IP');
       process.exit(0);
     } else if (arg === '--accept-license') {
       options.acceptLicense = true;
+    } else if (arg === '--accept-gdpr') {
+      options.acceptGdpr = true;
     } else if (arg === '--server-id') {
       if (next !== undefined) {
         i++;
