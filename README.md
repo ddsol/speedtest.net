@@ -43,6 +43,7 @@ Usage: `speedtest-net [-h|--help] [--accept-license] [--server-id <id>] [--sourc
 
 - **`-h`**, **`--help`**: Help
 - **`--accept-license`**: Accept the Ookla EULA, TOS and Privacy policy. The terms only need to be accepted once.
+- **`--accept-gdpr`**: Accept the Ookla GDPR terms. The terms only need to be accepted once.
 - **`--server-id <id>`**: Test using a specific server by Ookla server ID
 - **`--source-ip <ip>`**: Test a specific network interface identified by local IP
 
@@ -60,6 +61,7 @@ The options include:
   - **`host`**: _`string`_ Server host to connect to
   - **`verbosity`**: _`number`_ Log level for `{ type: log }` progress events
   - **`acceptLicense`**: _`boolean`_ Set to `true` to accept the Ookla EULA, TOS and Privacy policy. This must be done (at least) once on the system. If you have not accepted the Ookla license terms, you can view the links to their agreements by running the speedtest-net CLI without the `--accept-license` option.
+  - **`acceptGdpr`**: _`boolean`_ Set to `true` to accept the Ookla GDPR terms. This must be done (at least) once on the system. If you have not accepted the Ookla GDPR terms you can read their disclaimer by running the speedtest-net CLI without the `--accept-license` option.
 
 ## Progress Events
 
@@ -268,7 +270,7 @@ The `speedTest` function returns a promise that resolves to an object with the f
 ## Considerations
 This uses the official Ookla command line client so the results should be the same as the speedtest.net tests you can run in the browser.
 
-When running the speed test for the first time you may get an error indicating you need to accept the Ookla license terms. For the CLI you can pass the `--accept-license` option. For the module, you can pass the `{ acceptLicense: true }` option.
+When running the speed test for the first time you may get an error indicating you need to accept the Ookla license terms. For the CLI you can pass the `--accept-license` option. For the module, you can pass the `{ acceptLicense: true }` option. If you're located in Europe you might need to accept the additional GDPR terms, this can be done by passing `--accept-gdpr` for the CLI and the `{ acceptGdpr: true }` option when used as a module.  
 
 When running the test for the first time, and a CLI binary is not yet available, the client will be automatically downloaded from the Ookla server and unpacked. The file will then be marked as executable. This step may fail if the calling process does not have sufficient permissions. To get around this, you can pass either a custom `binary` option (module only), or manually mark the file as executable. The latter option is not recommended since this can break if you need to run `npm install` or `yarn`.
 

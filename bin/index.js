@@ -198,7 +198,11 @@ if (paramError) {
     step = 'Finished';
     updateLines();
   } catch (err) {
-    console.error(chalk.red(err.message.replace('acceptLicense: true', '--accept-license')));
+    if (err.message.test(/acceptLicense/)) {
+      console.error(chalk.red(err.message.replace('acceptLicense: true', '--accept-license')));
+    } else {
+      console.error(chalk.red(err.message.replace('acceptGdpr: true', '--accept-gdpr')));
+    }
     process.exit(1);
   } finally {
     process.exit(0);
