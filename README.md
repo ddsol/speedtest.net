@@ -62,6 +62,7 @@ The options include:
   - **`verbosity`**: _`number`_ Log level for `{ type: log }` progress events
   - **`acceptLicense`**: _`boolean`_ Set to `true` to accept the Ookla EULA, TOS and Privacy policy. This must be done (at least) once on the system. If you have not accepted the Ookla license terms, you can view the links to their agreements by running the speedtest-net CLI without the `--accept-license` option.
   - **`acceptGdpr`**: _`boolean`_ Set to `true` to accept the Ookla GDPR terms. This must be done (at least) once on the system. If you have not accepted the Ookla GDPR terms you can read their disclaimer by running the speedtest-net CLI without the `--accept-license` option.
+  - **`cancel`**: _`function`_ A cancellation function created with `speedTest.makeCancel()` to cancel the test (See [Canceling Tests]()).
 
 ## Progress Events
 
@@ -265,6 +266,30 @@ The `speedTest` function returns a promise that resolves to an object with the f
     url: 'https://www.speedtest.net/result/c/d5ac8c40-3d69-39ac-cfc1-3b349df780e9'
   }
 }
+```
+
+## Canceling Tests
+
+You can cancel tests by creating a test canceler with `makeCancel()`. Then pass this canceler to the test. Now, when the canceler is called, the test will be terminated. The promise will reject with an error.
+
+If the canceler is called before the test is started, the test will abort before starting.
+
+Canceler functions are not meant to be reused.
+
+```js
+const speedTest = require('speedtest-net');
+
+(async () => {
+  try {
+    const cancel = speedTest.makeCancel();
+    setTimeout(cancel, 1000);
+    console.log(await speedTest({ cancel }));
+  } catch (err) {
+    console.log(err.message);
+  } finally {
+    process.exit(0);
+  }
+})();
 ```
 
 ## Considerations

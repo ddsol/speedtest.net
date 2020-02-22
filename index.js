@@ -41,6 +41,7 @@ const decompressTarbz2 = require('decompress-tarbz2');
 const decompressTargz = require('decompress-targz');
 const decompressUnzip = require('decompress-unzip');
 const decompressTarXz = require('decompress-tarxz');
+const kill = require('tree-kill');
 
 function fileExists(file) {
   return new Promise(resolve => fs.access(file, fs.F_OK, err => resolve(!err)));
@@ -121,6 +122,8 @@ const progressPhases = {
 };
 const totalTime = Object.keys(progressPhases).reduce((total, key) => total + progressPhases[key], 0);
 Object.keys(progressPhases).forEach(key => progressPhases[key] /= totalTime);
+
+const setCancelHandler = Symbol();
 
 function appendFileName(fileName, trailer) {
   const ext = path.extname(fileName);
@@ -213,6 +216,7 @@ async function exec(options = {}) {
     serverId,
     sourceIp,
     host,
+    cancel = () => false,
     binaryVersion,
     verbosity = 0
   } = options;
@@ -237,7 +241,7 @@ async function exec(options = {}) {
   if (host) {
     args.push('-o', host);
   }
-  const process = childProcess.spawn(binary, args, {
+  const cliProcess = childProcess.spawn(binary, args, {
     windowsHide: true
   });
   const { promise, resolve, reject: rejectPromise } = pendingPromise();
@@ -246,21 +250,29 @@ async function exec(options = {}) {
     aborted = true;
     rejectPromise(err);
   };
+  if (cancel(setCancelHandler, () => {
+    aborted = true;
+    process.nextTick(() => reject(new Error('Test aborted')));
+  })) {
+    throw new Error('Test aborted');
+  }
   const errorLines = [];
   let priorProgress = 0;
   let lastProgress = 0;
   let currentPhase;
   let result = undefined;
-  lineify(process.stderr, handleLine.bind(null, true));
-  lineify(process.stdout, handleLine.bind(null, false));
-  process.on('exit', resolve);
-  process.on('error', origError => {
+  lineify(cliProcess.stderr, handleLine.bind(null, true));
+  lineify(cliProcess.stdout, handleLine.bind(null, false));
+  cliProcess.on('exit', resolve);
+  cliProcess.on('error', origError => {
     reject(new Error(errorLines.concat(origError.message).join('\n')));
   });
   try {
     await promise;
   } finally {
-    process.kill();
+    const pid = cliProcess.pid;
+    cliProcess.kill();
+    kill(pid);
   }
   if (errorLines.length) {
     let error = errorLines.join('\n');
@@ -340,5 +352,22 @@ async function exec(options = {}) {
   }
 }
 
+function makeCancel() {
+  let doCancel = null;
+  let isCanceled = false;
+  return (setHandler, newHandler) => {
+    if (setHandler === setCancelHandler) {
+      doCancel = newHandler;
+      return isCanceled;
+    }
+    if (isCanceled) return;
+    isCanceled = true;
+    if (doCancel) {
+      doCancel();
+    }
+  };
+}
+
 module.exports = exec;
 exec.defaultBinaryVersion = defaultBinaryVersion;
+exec.makeCancel = makeCancel;

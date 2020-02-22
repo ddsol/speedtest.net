@@ -20,7 +20,8 @@
     "download": "^7.1.0",
     "draftlog": "^1.0.12",
     "mkdirp": "^1.0.3",
-    "sha256-file": "^1.0.0"
+    "sha256-file": "^1.0.0",
+    "tree-kill": "^1.2.2"
   },
   "devDependencies": {
     "eslint": "^6.8.0"
