@@ -275,11 +275,15 @@ async function exec(options = {}) {
     kill(pid);
   }
   if (errorLines.length) {
-    let error = errorLines.join('\n');
-    error = error.replace(/===*.*====*\\nLicense acceptance recorded. Continuing.\n?/, '');
+    const licenseAcceptedMessage = /License acceptance recorded. Continuing./;
     const acceptLicenseMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-license/;
     const acceptGdprMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-gdpr/;
-    if (acceptLicenseMessage.test(error)) {
+
+    let error = errorLines.join('\n');
+
+    if (licenseAcceptedMessage.test(error)) {
+      error = '';
+    } else if (acceptLicenseMessage.test(error)) {
       error = error.replace(acceptLicenseMessage, 'To accept the message, pass the acceptLicense: true option');
     } else if (acceptGdprMessage.test(error)) {
       error = error.replace(acceptGdprMessage, 'To accept the message, pass the acceptGdpr: true option');
