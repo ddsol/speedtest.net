@@ -276,7 +276,7 @@ async function exec(options = {}) {
   }
   if (errorLines.length) {
     let error = errorLines.join('\n');
-    error = error.replace(/===*.*====*\nLicense acceptance recorded. Continuing.\n?/, '');
+    error = error.replace(/===*.*====*\\nLicense acceptance recorded. Continuing.\n?/, '');
     const acceptLicenseMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-license/;
     const acceptGdprMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-gdpr/;
     if (acceptLicenseMessage.test(error)) {
