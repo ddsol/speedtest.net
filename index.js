@@ -132,7 +132,7 @@ function appendFileName(fileName, trailer) {
 }
 
 async function ensureBinary({ platform = process.platform, arch = process.arch, binaryVersion = defaultBinaryVersion } = {}) {
-  const binaryLocation = 'https://bintray.com/ookla/download/download_file?file_path=ookla-speedtest-$v-$p';
+  const binaryLocation = 'https://install.speedtest.net/app/cli/ookla-speedtest-$v-$p';
   const found = platforms.find(p => p.platform === platform && p.arch === arch);
   if (!found) throw new Error(`${platform} on ${arch} not supported`);
   const binDir = path.join(__dirname, 'binaries');
