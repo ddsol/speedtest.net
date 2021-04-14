@@ -2,7 +2,7 @@
   "name": "speedtest-net",
   "description": "Speedtest.net client",
   "author": "Han de Boer",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "bin": "bin/index.js",
   "main": "index.js",
   "repository": {
