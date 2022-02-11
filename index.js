@@ -132,7 +132,7 @@ function appendFileName(fileName, trailer) {
 }
 
 async function ensureBinary({ platform = process.platform, arch = process.arch, binaryVersion = defaultBinaryVersion } = {}) {
-  const binaryLocation = 'https://bintray.com/ookla/download/download_file?file_path=ookla-speedtest-$v-$p';
+  const binaryLocation = 'https://install.speedtest.net/app/cli/ookla-speedtest-$v-$p';
   const found = platforms.find(p => p.platform === platform && p.arch === arch);
   if (!found) throw new Error(`${platform} on ${arch} not supported`);
   const binDir = path.join(__dirname, 'binaries');
@@ -275,11 +275,15 @@ async function exec(options = {}) {
     kill(pid);
   }
   if (errorLines.length) {
-    let error = errorLines.join('\n');
-    error = error.replace(/===*.*====*\nLicense acceptance recorded. Continuing.\n?/, '');
+    const licenseAcceptedMessage = /License acceptance recorded. Continuing./;
     const acceptLicenseMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-license/;
     const acceptGdprMessage = /To accept the message please run speedtest interactively or use the following:[\s\S]*speedtest --accept-gdpr/;
-    if (acceptLicenseMessage.test(error)) {
+
+    let error = errorLines.join('\n');
+
+    if (licenseAcceptedMessage.test(error)) {
+      error = '';
+    } else if (acceptLicenseMessage.test(error)) {
       error = error.replace(acceptLicenseMessage, 'To accept the message, pass the acceptLicense: true option');
     } else if (acceptGdprMessage.test(error)) {
       error = error.replace(acceptGdprMessage, 'To accept the message, pass the acceptGdpr: true option');
