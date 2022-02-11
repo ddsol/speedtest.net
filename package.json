@@ -10,21 +10,21 @@
     "url": "https://github.com/ddsol/speedtest.net.git"
   },
   "dependencies": {
-    "chalk": "^2.4.1",
+    "@felipecrs/decompress-tarxz": "^4.0.0",
+    "chalk": "^4.1.2",
     "decompress": "^4.2.0",
     "decompress-tar": "^4.1.1",
     "decompress-tarbz2": "^4.1.1",
     "decompress-targz": "^4.1.1",
-    "decompress-tarxz": "^3.0.0",
     "decompress-unzip": "^4.0.1",
-    "download": "^7.1.0",
+    "download": "^8.0.0",
     "draftlog": "^1.0.12",
     "mkdirp": "^1.0.3",
     "sha256-file": "^1.0.0",
     "tree-kill": "^1.2.2"
   },
   "devDependencies": {
-    "eslint": "^6.8.0"
+    "eslint": "^8.8.0"
   },
   "license": "MIT",
   "files": [
